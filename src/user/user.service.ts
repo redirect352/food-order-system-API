@@ -13,4 +13,7 @@ export class UserService {
   async findByLogin(login: string) {
     return await this.usersRepository.findOneBy({ login });
   }
+  async findById(id: number) {
+    return await this.usersRepository.findOneBy({ id });
+  }
 }

@@ -7,12 +7,13 @@ import {
   Query,
   UploadedFile,
   UseInterceptors,
-  ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImageService } from './image.service';
 import { GetImageListDto } from './image.dto';
+import { Roles } from 'src/auth/roles.decorator';
 
+@Roles('admin')
 @Controller('image')
 export class ImageController {
   constructor(private readonly imageService: ImageService) {}
@@ -38,12 +39,7 @@ export class ImageController {
 
   @Get('/list')
   get(
-    @Query(
-      new ValidationPipe({
-        transform: true,
-        transformOptions: { enableImplicitConversion: true },
-      }),
-    )
+    @Query()
     getListDto: GetImageListDto,
   ) {
     return this.imageService.getList(getListDto.page, getListDto.pageSize);

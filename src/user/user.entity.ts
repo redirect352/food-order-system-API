@@ -8,7 +8,7 @@ import {
   ManyToOne,
 } from 'typeorm';
 
-export type UserRoleType =
+export type UserRole =
   | 'client'
   | 'deliveryman'
   | 'orderIssuing'
@@ -57,7 +57,7 @@ export class User {
     ],
     default: 'client',
   })
-  role: UserRoleType;
+  role: UserRole;
 
   @ManyToOne(() => BranchOffice, (branchOffice) => branchOffice, {
     nullable: false,

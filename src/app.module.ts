@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TaskModule } from './task/task.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ImageModule } from './image/image.module';
 import { UserModule } from './user/user.module';
 import { BranchOfficeModule } from './branch-office/branch-office.module';
+import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
+import { CryptoModule } from './auth/crypto/crypto.module';
 
 @Module({
   imports: [
@@ -24,10 +26,12 @@ import { BranchOfficeModule } from './branch-office/branch-office.module';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'static'),
     }),
-    TaskModule,
     ImageModule,
     UserModule,
     BranchOfficeModule,
+    AuthModule,
+    ConfigModule.forRoot(),
+    CryptoModule,
   ],
   controllers: [AppController],
   providers: [AppService],
