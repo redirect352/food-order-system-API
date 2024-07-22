@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { CryptoService } from './crypto/crypto.service';
+import { updateUserDto } from './auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -9,6 +10,8 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly cryptoService: CryptoService,
+    @Inject('FirstAuthJwtService')
+    private readonly firstTimeJwtService: JwtService,
   ) {}
   async validateUser(login: string, password: string) {
     const user = await this.userService.findByLogin(login);
@@ -16,19 +19,41 @@ export class AuthService {
       user &&
       (await this.cryptoService.comparePassword(password, user.password))
     ) {
-      return { role: user.role, id: user.id };
+      if (user.isPasswordTemporary) {
+        return {
+          role: user.role,
+          id: user.id,
+          isPasswordTemporary: user.isPasswordTemporary,
+          email: user.email,
+        };
+      }
+      return {
+        role: user.role,
+        id: user.id,
+      };
     }
-    // const payload = { role: user.role, id: user.id };
-    // return {
-    //   access_token: await this.jwtService.signAsync(payload),
-    // };
     return null;
   }
 
   async login(user: { id: number; role: string }) {
     const payload = { id: user.id, role: user.role };
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: await this.jwtService.signAsync(payload),
     };
+  }
+
+  async generateFirstAuthToken(user: { id: number }) {
+    const payload = { id: user.id };
+    return {
+      access_token: await this.firstTimeJwtService.signAsync(payload),
+    };
+  }
+
+  async changeUserCredentials(id: number, user: updateUserDto) {
+    return await this.userService.updateUser(id, {
+      password: await this.cryptoService.hashPassword(user.newPassword),
+      login: user.newLogin,
+      isPasswordTemporary: false,
+    });
   }
 }

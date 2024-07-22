@@ -9,3 +9,13 @@ export class SignInDto {
   @IsString()
   password: string;
 }
+
+export class updateUserDto {
+  @MinLength(5)
+  @IsString()
+  newLogin: string;
+
+  @MinLength(8)
+  @IsString()
+  newPassword: string;
+}

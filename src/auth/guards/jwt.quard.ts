@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
-import { ROLES_KEY } from './roles.decorator';
 import { UserRole } from 'src/user/user.entity';
+import { ROLES_KEY } from '../roles.decorator';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -18,7 +18,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
-    console.log(roles);
     if (!roles) {
       return true;
     }
@@ -31,9 +30,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
-    console.log(roles);
-    console.log(user);
-    // You can throw an exception based on either "info" or "err" arguments
     if (err || !user || (roles && !roles.includes(user.role))) {
       throw err || new UnauthorizedException();
     }

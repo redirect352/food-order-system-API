@@ -3,7 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
 import { plainToClass } from 'class-transformer';
 import { validate } from 'class-validator';
-import { SignInDto } from './auth.dto';
+import { SignInDto } from '../auth.dto';
 
 @Injectable()
 export class LocalAuthGuard extends AuthGuard('local') {
