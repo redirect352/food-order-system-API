@@ -20,12 +20,9 @@ export class AuthService {
       (await this.cryptoService.comparePassword(password, user.password))
     ) {
       if (user.isPasswordTemporary) {
-        return {
-          role: user.role,
-          id: user.id,
-          isPasswordTemporary: user.isPasswordTemporary,
-          email: user.email,
-        };
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password, ...userRes } = user;
+        return userRes;
       }
       return {
         role: user.role,
@@ -50,7 +47,7 @@ export class AuthService {
   }
 
   async changeUserCredentials(id: number, user: updateUserDto) {
-    return await this.userService.updateUser(id, {
+    return await this.userService.updateUserById(id, {
       password: await this.cryptoService.hashPassword(user.newPassword),
       login: user.newLogin,
       isPasswordTemporary: false,

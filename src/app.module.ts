@@ -10,6 +10,7 @@ import { BranchOfficeModule } from './branch-office/branch-office.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { CryptoModule } from './auth/crypto/crypto.module';
+import { EmailBuilderModule } from './email-builder/email-builder.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { CryptoModule } from './auth/crypto/crypto.module';
     AuthModule,
     ConfigModule.forRoot(),
     CryptoModule,
+    EmailBuilderModule,
   ],
   controllers: [AppController],
   providers: [AppService],

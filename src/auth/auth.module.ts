@@ -11,6 +11,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { ValidateEmailStrategy } from './strategies/validate-email.strategy';
 import { FirstAuthStrategy } from './strategies/first-auth.strategy';
 import { JwtAuthGuard } from './guards/jwt.quard';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { EmailBuilderModule } from 'src/email-builder/email-builder.module';
 
 @Module({
   imports: [
@@ -26,7 +28,23 @@ import { JwtAuthGuard } from './guards/jwt.quard';
       }),
       inject: [ConfigService],
     }),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        transport: {
+          host: configService.get<string>('EMAIL_HOST'),
+          auth: {
+            user: configService.get<string>('EMAIL_USERNAME'),
+            pass: configService.get<string>('EMAIL_PASSWORD'),
+          },
+          secure: false,
+          port: 25,
+        },
+      }),
+      inject: [ConfigService],
+    }),
     CryptoModule,
+    EmailBuilderModule,
   ],
   controllers: [AuthController],
   providers: [

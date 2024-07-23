@@ -45,6 +45,9 @@ export class User {
   @Column({ default: true })
   isPasswordTemporary: boolean;
 
+  @Column({ default: null })
+  verificationEmailSendTime?: Date;
+
   @Column({
     type: 'enum',
     enum: [
