@@ -3,7 +3,7 @@ import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { User } from './user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CryptoModule } from 'src/auth/crypto/crypto.module';
+import { CryptoModule } from 'helpers/crypto/crypto.module';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User]), CryptoModule],

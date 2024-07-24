@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
-import { CryptoService } from './crypto/crypto.service';
+import { CryptoService } from '../../helpers/crypto/crypto.service';
 import { UpdateUserDto } from './auth.dto';
 
 @Injectable()

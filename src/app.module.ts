@@ -9,7 +9,7 @@ import { UserModule } from './user/user.module';
 import { BranchOfficeModule } from './branch-office/branch-office.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
-import { CryptoModule } from './auth/crypto/crypto.module';
+import { CryptoModule } from '../helpers/crypto/crypto.module';
 import { EmailBuilderModule } from '../helpers/email-builder/email-builder.module';
 
 @Module({
