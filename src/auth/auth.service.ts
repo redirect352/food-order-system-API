@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { CryptoService } from './crypto/crypto.service';
-import { updateUserDto } from './auth.dto';
+import { UpdateUserDto } from './auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -46,7 +46,7 @@ export class AuthService {
     };
   }
 
-  async changeUserCredentials(id: number, user: updateUserDto) {
+  async changeUserCredentials(id: number, user: UpdateUserDto) {
     return await this.userService.updateUserById(id, {
       password: await this.cryptoService.hashPassword(user.newPassword),
       login: user.newLogin,

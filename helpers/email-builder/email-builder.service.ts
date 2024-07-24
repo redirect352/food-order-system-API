@@ -7,6 +7,9 @@ export class EmailBuilderService {
   async fillConfirmationTemplate(values: { ACCEPT_LINK: string }) {
     return this.fillEmailTemplate(templatesPath.confirmation, values);
   }
+  async fillPasswordResetTemplate(values: { RESET_LINK: string }) {
+    return this.fillEmailTemplate(templatesPath.passwordReset, values);
+  }
   async fillEmailTemplate(
     templatePath: string,
     replaceValues: object,

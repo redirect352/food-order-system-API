@@ -12,7 +12,9 @@ import { ValidateEmailStrategy } from './strategies/validate-email.strategy';
 import { FirstAuthStrategy } from './strategies/first-auth.strategy';
 import { JwtAuthGuard } from './guards/jwt.quard';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { EmailBuilderModule } from 'src/email-builder/email-builder.module';
+import { EmailBuilderModule } from 'helpers/email-builder/email-builder.module';
+import { PasswordResetStrategy } from './strategies/password-reset.strategy';
+import { TimeCheckerModule } from 'helpers/time-checker/time-checker.module';
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { EmailBuilderModule } from 'src/email-builder/email-builder.module';
     }),
     CryptoModule,
     EmailBuilderModule,
+    TimeCheckerModule,
   ],
   controllers: [AuthController],
   providers: [
@@ -53,6 +56,7 @@ import { EmailBuilderModule } from 'src/email-builder/email-builder.module';
     JwtStrategy,
     ValidateEmailStrategy,
     FirstAuthStrategy,
+    PasswordResetStrategy,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

@@ -39,7 +39,7 @@ export class User {
   @Column()
   password: string;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
 
   @Column({ default: true })
@@ -47,6 +47,9 @@ export class User {
 
   @Column({ default: null })
   verificationEmailSendTime?: Date;
+
+  @Column({ default: null })
+  lastPasswordResetTime?: Date;
 
   @Column({
     type: 'enum',

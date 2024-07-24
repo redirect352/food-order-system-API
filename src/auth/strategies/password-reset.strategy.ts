@@ -8,8 +8,11 @@ import { EmailBuilderService } from 'helpers/email-builder/email-builder.service
 import { UserService } from 'src/user/user.service';
 
 @Injectable()
-export class ValidateEmailStrategy extends PassportStrategy(Strategy) {
-  private readonly logger = new Logger(ValidateEmailStrategy.name);
+export class PasswordResetStrategy extends PassportStrategy(
+  Strategy,
+  'changepassword',
+) {
+  private readonly logger = new Logger(PasswordResetStrategy.name);
 
   constructor(
     private readonly userService: UserService,
@@ -18,23 +21,25 @@ export class ValidateEmailStrategy extends PassportStrategy(Strategy) {
     mailBuilderService: EmailBuilderService,
   ) {
     super({
-      secret: configService.get<string>('VERIFY_SECRET'),
+      secret: configService.get<string>('PASSWORD_RESET_SECRET'),
+      userFields: ['id', 'login'],
       jwtOptions: {
-        expiresIn: configService.get<string>('VERIFY_EXPIRE'),
+        expiresIn: configService.get<string>('PASSWORD_RESET_EXPIRE'),
       },
-      callbackUrl: `${configService.get<string>('BASE_URL')}/api/auth/callback`,
+      callbackUrl: `${configService.get<string>('BASE_URL')}/api/auth/passwordReset`,
       sendMagicLink: async (destination, href) => {
+        console.log(destination, href);
         this.mailService.sendMail({
           from: 'Система заказа питания <noreply.sales@minsktrans.by>',
           to: destination,
-          subject: `Верификация в Системе заказа питания`,
-          html: await mailBuilderService.fillConfirmationTemplate({
-            ACCEPT_LINK: href,
+          subject: `Восстановление пароля`,
+          html: await mailBuilderService.fillPasswordResetTemplate({
+            RESET_LINK: href,
           }),
         });
         await userService.updateUser(
           { email: destination },
-          { verificationEmailSendTime: new Date() },
+          { lastPasswordResetTime: new Date() },
         );
         this.logger.debug(`sending email to ${destination} with Link ${href}`);
       },
@@ -45,7 +50,9 @@ export class ValidateEmailStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     const dbUser = await this.userService.findById(payload.id);
-    if (!dbUser || !dbUser.isPasswordTemporary) {
+    console.log(dbUser);
+
+    if (!dbUser || dbUser.password.substring(0, 10) !== payload.hash) {
       throw new UnauthorizedException();
     }
     return payload;
