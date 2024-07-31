@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   NotFoundException,
+  Patch,
   Post,
   Req,
   Res,
@@ -13,11 +14,13 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { ValidateEmailStrategy } from './strategies/validate-email.strategy';
 import { AuthGuard } from '@nestjs/passport';
-import { ChangePasswordDto, ResetPasswordDto, UpdateUserDto } from './auth.dto';
 import { User } from 'src/user/user.entity';
 import { PasswordResetStrategy } from './strategies/password-reset.strategy';
 import { UserService } from 'src/user/user.service';
-import { TimeCheckerService } from 'helpers/time-checker/time-checker.service';
+import { TimeCheckerService } from 'lib/helpers/time-checker/time-checker.service';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateCredentialsDto } from './dto/update-credentials.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -30,12 +33,10 @@ export class AuthController {
   ) {}
 
   @UseGuards(LocalAuthGuard)
-  @Post('/signin')
+  @Post('/sign-in')
   async signIn(@Req() req, @Res() res) {
     const user: User = req.user;
     if (user.isPasswordTemporary) {
-      console.log(user);
-      console.log(new Date(), user.verificationEmailSendTime);
       if (
         user.verificationEmailSendTime &&
         new Date().getTime() - user.verificationEmailSendTime.getTime() <=
@@ -49,22 +50,15 @@ export class AuthController {
       req.body.id = user.id;
       delete req.body.password;
       delete req.body.login;
-      console.log(req);
       this.validateEmailStrategy.send(req, res);
       return;
     }
     const result = await this.authService.login(req.user);
     res.status(200);
-    res.send(result);
+    res.send({ ...result, statusCode: 200 });
   }
 
-  @UseGuards(AuthGuard('magiclogin'))
-  @Get('/callback')
-  callback(@Req() req) {
-    return this.authService.generateFirstAuthToken(req.user);
-  }
-
-  @Post('/queryPasswordReset')
+  @Post('/reset-password')
   async queryPassRestore(
     @Req() req,
     @Res() res,
@@ -98,8 +92,8 @@ export class AuthController {
     return this.passwordResetStrategy.send(req, res);
   }
 
-  @UseGuards(AuthGuard('changepassword'))
-  @Post('/resetPassword')
+  @UseGuards(AuthGuard('change-password'))
+  @Post('/change-password')
   async changePassword(
     @Req() req,
     @Res({ passthrough: true }) res,
@@ -120,10 +114,40 @@ export class AuthController {
     };
   }
 
-  @Post('/changeCredentials')
-  @UseGuards(AuthGuard('firstAuth'))
-  async changeAuthInfo(@Req() req, @Body() updateUserDto: UpdateUserDto) {
+  @UseGuards(AuthGuard('magic-login'))
+  @Patch('/change-credentials')
+  async changeAuthInfo(
+    @Req() req,
+    @Body() updateUserDto: UpdateCredentialsDto,
+  ) {
     const user = req.user;
-    return this.authService.changeUserCredentials(user.id, updateUserDto);
+    const res = await this.authService.changeUserCredentials(
+      user.id,
+      updateUserDto,
+    );
+    if (res.affected === 1) {
+      return { statusCode: 200 };
+    } else {
+      throw new NotFoundException(
+        'Пользователь не найден! Ошибка изменения пароля',
+      );
+    }
+  }
+
+  @UseGuards(AuthGuard('magic-login'))
+  @Get('/check-first-auth-token')
+  async checkFirstAuthToken(@Req() req) {
+    const user: User = req.user;
+    return {
+      user: {
+        name: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          patronymic: user.patronymic,
+        },
+        login: user.login,
+      },
+      statusCode: 200,
+    };
   }
 }

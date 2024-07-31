@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { FindOptionsWhere, ObjectId, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { CryptoService } from 'helpers/crypto/crypto.service';
+import { CryptoService } from 'lib/helpers/crypto/crypto.service';
 
 @Injectable()
 export class UserService {

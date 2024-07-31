@@ -4,13 +4,13 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import Strategy from 'passport-magic-login';
-import { EmailBuilderService } from 'helpers/email-builder/email-builder.service';
+import { EmailBuilderService } from 'lib/helpers/email-builder/email-builder.service';
 import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class PasswordResetStrategy extends PassportStrategy(
   Strategy,
-  'changepassword',
+  'change-password',
 ) {
   private readonly logger = new Logger(PasswordResetStrategy.name);
 
@@ -28,7 +28,6 @@ export class PasswordResetStrategy extends PassportStrategy(
       },
       callbackUrl: `${configService.get<string>('BASE_URL')}/api/auth/passwordReset`,
       sendMagicLink: async (destination, href) => {
-        console.log(destination, href);
         this.mailService.sendMail({
           from: 'Система заказа питания <noreply.sales@minsktrans.by>',
           to: destination,
@@ -50,8 +49,6 @@ export class PasswordResetStrategy extends PassportStrategy(
 
   async validate(payload: any) {
     const dbUser = await this.userService.findById(payload.id);
-    console.log(dbUser);
-
     if (!dbUser || dbUser.password.substring(0, 10) !== payload.hash) {
       throw new UnauthorizedException();
     }

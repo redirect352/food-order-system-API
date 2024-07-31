@@ -5,7 +5,10 @@ import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
 
 @Injectable()
-export class FirstAuthStrategy extends PassportStrategy(Strategy, 'firstAuth') {
+export class FirstAuthStrategy extends PassportStrategy(
+  Strategy,
+  'first-auth',
+) {
   constructor(
     private configService: ConfigService,
     private readonly userService: UserService,
