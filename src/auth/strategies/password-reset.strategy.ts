@@ -26,7 +26,7 @@ export class PasswordResetStrategy extends PassportStrategy(
       jwtOptions: {
         expiresIn: configService.get<string>('PASSWORD_RESET_EXPIRE'),
       },
-      callbackUrl: `${configService.get<string>('BASE_URL')}/api/auth/passwordReset`,
+      callbackUrl: `${configService.get<string>('BASE_URL')}/change-password`,
       sendMagicLink: async (destination, href) => {
         this.mailService.sendMail({
           from: 'Система заказа питания <noreply.sales@minsktrans.by>',

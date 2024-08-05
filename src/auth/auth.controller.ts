@@ -93,7 +93,7 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard('change-password'))
-  @Post('/change-password')
+  @Patch('/change-password')
   async changePassword(
     @Req() req,
     @Res({ passthrough: true }) res,
