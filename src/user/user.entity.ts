@@ -31,7 +31,7 @@ export class User {
   patronymic: string;
 
   @Column()
-  PersonnelNumber: string;
+  personnelNumber: string;
 
   @Column({ unique: true })
   login: string;

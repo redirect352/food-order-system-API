@@ -21,7 +21,7 @@ export class UserController {
           'firstName',
           'lastName',
           'patronymic',
-          'PersonnelNumber',
+          'personnelNumber',
           'email',
           'office',
         ].includes(key),
