@@ -21,6 +21,8 @@ import { TimeCheckerService } from 'lib/helpers/time-checker/time-checker.servic
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateCredentialsDto } from './dto/update-credentials.dto';
+import * as DeviceDetector from 'device-detector-js';
+import { RealIP } from 'nestjs-real-ip';
 
 @Controller('auth')
 export class AuthController {
@@ -34,7 +36,7 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('/sign-in')
-  async signIn(@Req() req, @Res() res) {
+  async signIn(@Req() req, @Res() res, @RealIP() ip: string) {
     const user: User = req.user;
     if (user.isPasswordTemporary) {
       if (
@@ -54,6 +56,15 @@ export class AuthController {
       return;
     }
     const result = await this.authService.login(req.user);
+    console.log(req.headers);
+    // const clientIp =
+    //   req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    console.log(ip);
+    console.log();
+    const deviceDetector = new DeviceDetector();
+    console.log(deviceDetector.parse(req.headers['user-agent']));
+
+    // console.log(clientIp);
     res.status(200);
     res.send({ ...result, statusCode: 200 });
   }

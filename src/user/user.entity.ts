@@ -67,6 +67,7 @@ export class User {
 
   @ManyToOne(() => BranchOffice, (branchOffice) => branchOffice, {
     nullable: false,
+    eager: true,
   })
   office: BranchOffice;
 
