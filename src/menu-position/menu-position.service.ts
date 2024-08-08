@@ -47,4 +47,14 @@ export class MenuPositionService {
       });
     return result.identifiers;
   }
+
+  async getMenuPositions(idList: number[], fields: string[] = []) {
+    return this.menuPositionRepository
+      .createQueryBuilder()
+      .select(fields)
+      .where('MenuPosition.id IN (:...idList)', {
+        idList,
+      })
+      .getRawMany();
+  }
 }

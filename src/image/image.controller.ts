@@ -14,7 +14,7 @@ import { ImageService } from './image.service';
 import { GetImageListDto, UploadImageDto } from './image.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
-@Roles('admin')
+@Roles('admin', 'client')
 @Controller('image')
 export class ImageController {
   constructor(private readonly imageService: ImageService) {}
