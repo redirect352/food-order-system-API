@@ -56,15 +56,11 @@ export class AuthController {
       return;
     }
     const result = await this.authService.login(req.user);
-    console.log(req.headers);
-    // const clientIp =
-    //   req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log(ip);
-    console.log();
-    const deviceDetector = new DeviceDetector();
-    console.log(deviceDetector.parse(req.headers['user-agent']));
+    // const clie'x-forwarded-for'] || req.connection.remoteAddress;
+    // console.log(ip);
+    // const deviceDetector = new DeviceDetector();
+    // console.log(deviceDetector.parse(req.headers['user-agent']));
 
-    // console.log(clientIp);
     res.status(200);
     res.send({ ...result, statusCode: 200 });
   }

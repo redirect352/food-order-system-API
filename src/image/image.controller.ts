@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   HttpStatus,
@@ -10,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImageService } from './image.service';
-import { GetImageListDto } from './image.dto';
+import { GetImageListDto, UploadImageDto } from './image.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @Roles('admin')
@@ -23,7 +24,7 @@ export class ImageController {
     @UploadedFile(
       new ParseFilePipeBuilder()
         .addFileTypeValidator({
-          fileType: 'jpeg|png',
+          fileType: 'jpeg|png|jpg',
         })
         .addMaxSizeValidator({
           maxSize: 1000 * 1000 * 2,
@@ -33,8 +34,9 @@ export class ImageController {
         }),
     )
     file: Express.Multer.File,
+    @Body() uploadImageDto: UploadImageDto,
   ) {
-    return this.imageService.saveImageToStatic(file);
+    return this.imageService.saveImageToStatic(file, uploadImageDto.name);
   }
 
   @Get('/list')

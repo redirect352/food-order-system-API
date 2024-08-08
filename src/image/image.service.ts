@@ -14,7 +14,7 @@ export class ImageService {
     private readonly userService: UserService,
   ) {}
 
-  async saveImageToStatic(file: Express.Multer.File) {
+  async saveImageToStatic(file: Express.Multer.File, name?: string) {
     const originalName = file.originalname;
     const fileName =
       originalName.slice(0, originalName.lastIndexOf('.')) +
@@ -25,14 +25,17 @@ export class ImageService {
         originalName.length,
       );
     await fs.writeFile(
-      join(__dirname, '..', '..', 'static', 'images', fileName),
+      join(__dirname, '..', '..', '..', 'static', 'images', fileName),
       file.buffer,
     );
     const image = new Image();
+    console.log(file);
+    image.name =
+      name ?? file.originalname.slice(0, originalName.lastIndexOf('.'));
     image.path = fileName;
     image.uploadedBy = await this.userService.findByLogin('admin');
     await this.imagesRepository.save(image);
-    return fileName;
+    return { fileName };
   }
 
   async getList(page: number, pageSize: number) {
@@ -41,5 +44,8 @@ export class ImageService {
       skip: (page - 1) * pageSize,
       take: pageSize,
     });
+  }
+  async getImageById(id: number) {
+    return await this.imagesRepository.findOne({ where: { id } });
   }
 }

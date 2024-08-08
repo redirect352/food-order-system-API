@@ -12,8 +12,6 @@ export class UserController {
     if (!user) {
       throw new NotFoundException('Пользователь не найден');
     }
-    console.log(user);
-    console.log(user.office);
     const result = Object.fromEntries(
       Object.entries(user).filter(([key]) =>
         [

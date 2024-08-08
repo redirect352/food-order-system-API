@@ -13,6 +13,9 @@ export class Image {
   id: number;
 
   @Column()
+  name: string;
+
+  @Column()
   path: string;
 
   @CreateDateColumn()

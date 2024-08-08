@@ -11,6 +11,11 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { CryptoModule } from '../lib/helpers/crypto/crypto.module';
 import { EmailBuilderModule } from '../lib/helpers/email-builder/email-builder.module';
+import { DishModule } from './dish/dish.module';
+import { MenuPositionModule } from './menu-position/menu-position.module';
+import { MenuModule } from './menu/menu.module';
+
+console.log(join(__dirname, '..', '..', 'static'));
 
 @Module({
   imports: [
@@ -25,7 +30,7 @@ import { EmailBuilderModule } from '../lib/helpers/email-builder/email-builder.m
       synchronize: true,
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'static'),
+      rootPath: join(__dirname, '..', '..', 'static'),
     }),
     ImageModule,
     UserModule,
@@ -34,6 +39,9 @@ import { EmailBuilderModule } from '../lib/helpers/email-builder/email-builder.m
     ConfigModule.forRoot(),
     CryptoModule,
     EmailBuilderModule,
+    DishModule,
+    MenuPositionModule,
+    MenuModule,
   ],
   controllers: [AppController],
   providers: [AppService],
