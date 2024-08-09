@@ -1,5 +1,12 @@
 import { Dish } from 'src/dish/dish.entity';
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Menu } from 'src/menu/menu.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  ManyToMany,
+} from 'typeorm';
 
 @Entity()
 export class MenuPosition {
@@ -13,6 +20,10 @@ export class MenuPosition {
     nullable: false,
     cascade: ['insert', 'remove'],
     onDelete: 'CASCADE',
+    eager: true,
   })
   dish: Dish;
+
+  @ManyToMany(() => Menu, (menu) => menu.menuPositions)
+  menus: Menu[];
 }

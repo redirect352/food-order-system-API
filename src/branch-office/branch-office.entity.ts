@@ -8,7 +8,7 @@ export class BranchOffice {
   name: string;
   @Column()
   address: string;
-  @Column({ default: false })
+  @Column({ default: false, select: false })
   isCanteen: boolean;
   @ManyToOne(() => BranchOffice, (branchOffice) => branchOffice)
   servingCanteen: BranchOffice;

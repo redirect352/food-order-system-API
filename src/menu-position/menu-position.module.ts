@@ -10,5 +10,6 @@ import { IsMenuPositionsExistsConstraint } from './validators/menu-positions-exi
   imports: [TypeOrmModule.forFeature([MenuPosition]), DishModule],
   controllers: [MenuPositionController],
   providers: [MenuPositionService, IsMenuPositionsExistsConstraint],
+  exports: [MenuPositionService],
 })
 export class MenuPositionModule {}

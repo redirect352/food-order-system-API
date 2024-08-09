@@ -7,6 +7,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { isBranchOfficeExists } from 'src/branch-office/validators/branch-office-exists.validator';
+import { IsDishCategoryExists } from 'src/dish-category/validators/dish-category-exists.validator';
 import { isImageExists } from 'src/image/validators/image-exists.validator';
 
 export class CreateDishDto {
@@ -61,4 +62,9 @@ export class CreateDishDto {
   @Min(1)
   @isBranchOfficeExists({ checkOnCanteen: true })
   providingCanteenId: number;
+
+  @IsInt()
+  @Min(1)
+  @IsDishCategoryExists()
+  dishCategoryId: number;
 }

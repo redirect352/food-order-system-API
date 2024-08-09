@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { MenuPosition } from './menu-position.entity';
 import { CreateMenuPositionDto } from './dto/create-menu-position.dto';
 import { DishService } from 'src/dish/dish.service';
+import { GetUserMenuDto } from 'src/menu/dto/get-user-menu.dto';
 
 @Injectable()
 export class MenuPositionService {
@@ -56,5 +57,37 @@ export class MenuPositionService {
         idList,
       })
       .getRawMany();
+  }
+
+  async getActual(canteenId: number, getUserMenuDto: GetUserMenuDto) {
+    const { page, pageSize, dishCategoryId, productType } = getUserMenuDto;
+    const now = new Date();
+    const query = await this.menuPositionRepository
+      .createQueryBuilder('menuPosition')
+      .leftJoin('menuPosition.menus', 'menu')
+      .leftJoinAndSelect('menuPosition.dish', 'dish')
+      .leftJoinAndSelect('dish.image', 'dishImage')
+      .leftJoinAndSelect('dish.providingCanteen', 'dishProducer')
+      .leftJoinAndSelect('dish.category', 'dishCategory')
+      .where('menu.providingCanteenId=:id', {
+        id: canteenId,
+      })
+      .andWhere('menu.expire > :date', { date: now })
+      .andWhere('menu.relevantFrom <= :dateFrom', { dateFrom: now })
+      .skip((page - 1) * pageSize)
+      .take(pageSize);
+    if (dishCategoryId) {
+      query.andWhere('dishCategory.id = :categoryId', {
+        categoryId: dishCategoryId,
+      });
+    }
+    if (productType) {
+      if (productType === 'alien') {
+        query.andWhere('dish.externalProducer is not NULL');
+      } else {
+        query.andWhere('dish.providingCanteen is not NULL');
+      }
+    }
+    return await query.getMany();
   }
 }

@@ -1,4 +1,5 @@
 import { BranchOffice } from 'src/branch-office/branch-office.entity';
+import { DishCategory } from 'src/dish-category/dish-category.entity';
 import { Image } from 'src/image/image.entity';
 import { MenuPosition } from 'src/menu-position/menu-position.entity';
 import {
@@ -40,6 +41,12 @@ export class Dish {
 
   @ManyToOne(() => Image, (image) => image, { eager: true })
   image?: Image;
+
+  @ManyToOne(() => DishCategory, (dishCategory) => dishCategory.dish, {
+    eager: true,
+    nullable: false,
+  })
+  category: DishCategory;
 
   @OneToMany(() => MenuPosition, (menuPosition) => menuPosition.dish, {
     eager: false,

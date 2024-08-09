@@ -18,7 +18,7 @@ export class Image {
   @Column()
   path: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ select: false })
   uploaded: Date;
 
   @ManyToOne(() => User, (user) => user)

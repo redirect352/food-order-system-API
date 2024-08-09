@@ -10,6 +10,9 @@ export class BranchOfficeService {
     private branchOfficeRepository: Repository<BranchOffice>,
   ) {}
   async getBranchOfficeById(id: number) {
-    return this.branchOfficeRepository.findOne({ where: { id } });
+    return this.branchOfficeRepository.findOne({
+      where: { id },
+      select: ['id', 'isCanteen', 'name', 'servingCanteen', 'address'],
+    });
   }
 }

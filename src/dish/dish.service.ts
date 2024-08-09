@@ -23,6 +23,9 @@ export class DishService {
         image: {
           id: createDishDto.imageId,
         },
+        category: {
+          id: createDishDto.dishCategoryId,
+        },
       })
       .execute()
       .catch((err) => {

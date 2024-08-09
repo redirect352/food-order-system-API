@@ -14,6 +14,7 @@ import { EmailBuilderModule } from '../lib/helpers/email-builder/email-builder.m
 import { DishModule } from './dish/dish.module';
 import { MenuPositionModule } from './menu-position/menu-position.module';
 import { MenuModule } from './menu/menu.module';
+import { DishCategoryModule } from './dish-category/dish-category.module';
 
 console.log(join(__dirname, '..', '..', 'static'));
 
@@ -42,6 +43,7 @@ console.log(join(__dirname, '..', '..', 'static'));
     DishModule,
     MenuPositionModule,
     MenuModule,
+    DishCategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
