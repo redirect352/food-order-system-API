@@ -17,7 +17,7 @@ export class CreateMenuPositionDto {
   price: number;
 
   @IsInt()
-  @Min(1)
+  @Min(0)
   @Max(100)
   discount: number;
 

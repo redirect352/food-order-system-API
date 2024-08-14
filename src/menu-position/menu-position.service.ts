@@ -77,17 +77,43 @@ export class MenuPositionService {
       .skip((page - 1) * pageSize)
       .take(pageSize);
     if (dishCategoryId) {
-      query.andWhere('dishCategory.id = :categoryId', {
+      query.andWhere('dishCategory.id in (:...categoryId)', {
         categoryId: dishCategoryId,
       });
     }
-    if (productType) {
-      if (productType === 'alien') {
+    if (productType && productType.length === 1) {
+      if (productType[0] === 'alien') {
         query.andWhere('dish.externalProducer is not NULL');
       } else {
-        query.andWhere('dish.providingCanteen is not NULL');
+        query.andWhere('dish.externalProducer is NULL');
       }
     }
-    return await query.getMany();
+    const res = await query.getManyAndCount();
+    const pageCount = Math.ceil(res[1] / pageSize);
+    return {
+      pages: pageCount,
+      items: res[0],
+    };
+  }
+
+  async getActualCategories(canteenId: number) {
+    const now = new Date();
+    const query = await this.menuPositionRepository
+      .createQueryBuilder('menuPosition')
+      .leftJoinAndSelect('menuPosition.menus', 'menu')
+      .innerJoinAndSelect('menuPosition.dish', 'dish')
+      .innerJoinAndSelect('dish.category', 'dishCategory')
+      .where('menu.providingCanteenId=:id', {
+        id: canteenId,
+      })
+      .select(['dishCategory.id', 'dishCategory.name'])
+      .andWhere('menu.expire > :date', { date: now })
+      .andWhere('menu.relevantFrom <= :dateFrom', { dateFrom: now })
+      .groupBy('dishCategory.id');
+    const result = await query.execute();
+    return result.map(({ dishCategory_id, dishCategory_name }) => ({
+      id: dishCategory_id,
+      name: dishCategory_name,
+    }));
   }
 }

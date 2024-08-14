@@ -12,4 +12,8 @@ export class DishCategoryService {
   async getById(id: number) {
     return await this.dishCategoryRepository.findOne({ where: { id } });
   }
+  async getByName(name?: string) {
+    if (!name) return null;
+    return await this.dishCategoryRepository.findOne({ where: { name } });
+  }
 }

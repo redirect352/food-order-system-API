@@ -43,21 +43,35 @@ export class MenuService {
   }
 
   async getActualMenuForUser(getUserMenuDto: GetUserMenuDto, userId?: number) {
+    console.log(getUserMenuDto);
     if (!userId) throw new UnauthorizedException();
     const canteenId = await this.userService.findUserServingCanteen(userId);
     const menuList = await this.menuPositionService.getActual(
       canteenId,
       getUserMenuDto,
     );
-    if (!menuList) return [];
+    if (!menuList.items)
+      return {
+        items: [],
+      };
     else {
-      return menuList.map((item) =>
-        _.omit(item, [
-          'dish.providingCanteen.id',
-          'dish.providingCanteen.address',
-          'dish.image.id',
-        ]),
-      );
+      return {
+        page: getUserMenuDto.page,
+        totalPages: menuList.pages,
+        items: menuList.items.map((item) =>
+          _.omit(item, [
+            'dish.providingCanteen.id',
+            'dish.providingCanteen.address',
+            'dish.image.id',
+          ]),
+        ),
+      };
     }
+  }
+
+  async getActualMenuCategories(userId?: number) {
+    if (!userId) throw new UnauthorizedException();
+    const canteenId = await this.userService.findUserServingCanteen(userId);
+    return this.menuPositionService.getActualCategories(canteenId);
   }
 }

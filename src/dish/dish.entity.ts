@@ -44,9 +44,9 @@ export class Dish {
 
   @ManyToOne(() => DishCategory, (dishCategory) => dishCategory.dish, {
     eager: true,
-    nullable: false,
+    nullable: true,
   })
-  category: DishCategory;
+  category?: DishCategory;
 
   @OneToMany(() => MenuPosition, (menuPosition) => menuPosition.dish, {
     eager: false,

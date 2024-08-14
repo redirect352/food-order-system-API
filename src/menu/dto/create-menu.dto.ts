@@ -12,9 +12,6 @@ import { isMenuPositionsExists } from 'src/menu-position/validators/menu-positio
 
 export class CreateMenuDto {
   @IsDate()
-  @MinDate(() => new Date(), {
-    message: 'Дата актуальности меню должна быть позже текущей',
-  })
   relevantFrom: Date;
 
   @IsDate()

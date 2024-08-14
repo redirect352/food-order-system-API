@@ -17,11 +17,15 @@ export class MenuController {
 
   @Get('/actual')
   async getUserMenu(@Req() req, @Query() getUserMenuDto: GetUserMenuDto) {
-    console.log(getUserMenuDto);
     const menu = await this.menuService.getActualMenuForUser(
       getUserMenuDto,
       req.user.userId,
     );
     return menu;
+  }
+
+  @Get('/actual/menu-categories')
+  async getMenuCategories(@Req() req) {
+    return await this.menuService.getActualMenuCategories(req.user.userId);
   }
 }

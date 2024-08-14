@@ -9,5 +9,6 @@ import { IsDishCategoryExistsConstraint } from './validators/dish-category-exist
   imports: [TypeOrmModule.forFeature([DishCategory])],
   controllers: [DishCategoryController],
   providers: [DishCategoryService, IsDishCategoryExistsConstraint],
+  exports: [DishCategoryService],
 })
 export class DishCategoryModule {}

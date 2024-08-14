@@ -29,7 +29,6 @@ export class ImageService {
       file.buffer,
     );
     const image = new Image();
-    console.log(file);
     image.name =
       name ?? file.originalname.slice(0, originalName.lastIndexOf('.'));
     image.path = fileName;

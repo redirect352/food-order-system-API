@@ -1,4 +1,5 @@
-import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsArray, IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class GetUserMenuDto {
   @IsInt()
@@ -11,11 +12,15 @@ export class GetUserMenuDto {
   pageSize?: number = 10;
 
   @IsOptional()
-  @IsInt()
-  @Min(1)
-  dishCategoryId?: number;
+  @Transform((params) => params.value.split(',').map(Number))
+  @IsArray()
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  dishCategoryId?: number[];
 
   @IsOptional()
-  @IsIn(['ownProduct', 'alien'])
+  @Transform((params) => params.value.split(',').map((val) => val.trim()))
+  @IsArray()
+  @IsIn(['ownProduct', 'alien'], { each: true })
   productType?: 'ownProduct' | 'alien';
 }

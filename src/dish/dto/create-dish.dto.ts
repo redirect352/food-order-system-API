@@ -63,8 +63,14 @@ export class CreateDishDto {
   @isBranchOfficeExists({ checkOnCanteen: true })
   providingCanteenId: number;
 
+  @IsOptional()
   @IsInt()
   @Min(1)
   @IsDishCategoryExists()
-  dishCategoryId: number;
+  dishCategoryId?: number;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  dishCategoryName?: string;
 }
