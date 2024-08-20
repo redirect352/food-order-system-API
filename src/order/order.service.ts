@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Repository, DataSource } from 'typeorm';
@@ -13,6 +14,9 @@ import { OrderStatus } from './order-status/order-status.entity';
 import { OrderToMenuPosition } from './order-to-menu-position/order-to-menu-position.entity';
 import { MenuPosition } from 'src/menu-position/menu-position.entity';
 import { OrderStatusService } from './order-status/order-status.service';
+import { GetActiveOrdersDto } from './dto/get-active-orders.dto';
+import { PriceService } from 'lib/helpers/price/price.service';
+import { OrderMainInfoDto } from './dto/order-main-info.dto';
 
 @Injectable()
 export class OrderService {
@@ -20,7 +24,9 @@ export class OrderService {
     @InjectRepository(Order) private orderRepository: Repository<Order>,
     private dataSource: DataSource,
     private readonly orderStatusService: OrderStatusService,
+    private readonly priceService: PriceService,
   ) {}
+  private readonly logger = new Logger(OrderService.name);
 
   async createOrder(createOrderDto: CreateOrderDto, userId: number) {
     const date = moment().format('YYYY-MM-DD');
@@ -47,7 +53,7 @@ export class OrderService {
         .getRepository(MenuPosition)
         .createQueryBuilder('menuPosition')
         .leftJoin('menuPosition.menus', 'menu')
-        .select(['menuPosition.id as id'])
+        .select(['menuPosition.id as id', 'price', 'discount'])
         .where('menu.expire > :date', { date: now })
         .andWhere('menu.relevantFrom <= :dateFrom', { dateFrom: now })
         .andWhere('menuPosition.id in (:idList)', {
@@ -73,6 +79,14 @@ export class OrderService {
       order.client = { id: userId, ...new User() };
       order.number = number;
       order.issued = date;
+      order.fullPrice = this.priceService.getFullPrice(
+        positions.map((pos) => ({
+          price: pos.price,
+          discount: pos.discount,
+          count:
+            menuPositionCounts[menuPositions.findIndex((id) => id === pos.id)],
+        })),
+      );
       order.status = (await this.orderStatusService.getByName(
         defaultOrderStatus,
         queryRunner.manager.getRepository(OrderStatus),
@@ -94,13 +108,51 @@ export class OrderService {
       return {
         number: final.number,
         status: final.status,
+        fullPrice: final.fullPrice,
       };
     } catch (err) {
-      console.log(err);
+      this.logger.error(err);
       await queryRunner.rollbackTransaction();
       throw new BadRequestException(err.message);
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async getActive(getActiveOrdersDto: GetActiveOrdersDto, userId: number) {
+    const { page, pageSize } = getActiveOrdersDto;
+    const res = await this.orderRepository
+      .createQueryBuilder('order')
+      .select()
+      .leftJoinAndSelect('order.status', 'orderStatus')
+      .leftJoinAndSelect('order.orderToMenuPosition', 'orderToMenuPosition')
+      .leftJoinAndSelect('orderToMenuPosition.menuPosition', 'menuPosition')
+      .leftJoinAndSelect('menuPosition.dish', 'dish')
+      .where('clientId=:userId', { userId })
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getManyAndCount();
+    if (res.length > 0) {
+      return {
+        totalPages: Math.ceil(res[1] / pageSize),
+        items: res[0].map((item) => new OrderMainInfoDto(item)),
+      };
+    }
+    return [];
+  }
+
+  async getOrder(issued: string, number: number, userId: string) {
+    const res = await this.orderRepository
+      .createQueryBuilder('order')
+      .select()
+      .leftJoinAndSelect('order.status', 'orderStatus')
+      .leftJoinAndSelect('order.orderToMenuPosition', 'orderToMenuPosition')
+      .leftJoinAndSelect('orderToMenuPosition.menuPosition', 'menuPosition')
+      .leftJoinAndSelect('menuPosition.dish', 'dish')
+      .where('issued=:issued', { issued })
+      .andWhere('number=:number', { number })
+      .andWhere('clientId=:userId', { userId })
+      .getOne();
+    return res;
   }
 }

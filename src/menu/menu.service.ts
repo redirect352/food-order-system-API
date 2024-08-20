@@ -7,9 +7,9 @@ import { BranchOffice } from 'src/branch-office/branch-office.entity';
 import { MenuPosition } from 'src/menu-position/menu-position.entity';
 import { User } from 'src/user/user.entity';
 import { UserService } from 'src/user/user.service';
-import * as _ from 'lodash';
 import { GetUserMenuDto } from './dto/get-user-menu.dto';
 import { MenuPositionService } from 'src/menu-position/menu-position.service';
+import { MenuPositionItem } from './dto/menu-position-item.dto';
 
 @Injectable()
 export class MenuService {
@@ -57,13 +57,7 @@ export class MenuService {
       return {
         page: getUserMenuDto.page,
         totalPages: menuList.pages,
-        items: menuList.items.map((item) =>
-          _.omit(item, [
-            'dish.providingCanteen.id',
-            'dish.providingCanteen.address',
-            'dish.image.id',
-          ]),
-        ),
+        items: menuList.items.map((item) => new MenuPositionItem(item)),
       };
     }
   }

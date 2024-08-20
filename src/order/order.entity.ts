@@ -42,6 +42,9 @@ export class Order {
   @Column({ type: 'date' })
   issued: string;
 
+  @Column()
+  fullPrice: number;
+
   @UpdateDateColumn()
   updated: Date;
 
