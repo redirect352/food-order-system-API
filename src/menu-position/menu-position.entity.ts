@@ -1,11 +1,13 @@
 import { Dish } from 'src/dish/dish.entity';
 import { Menu } from 'src/menu/menu.entity';
+import { OrderToMenuPosition } from 'src/order/order-to-menu-position/order-to-menu-position.entity';
 import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
   ManyToOne,
   ManyToMany,
+  OneToMany,
 } from 'typeorm';
 
 @Entity()
@@ -26,4 +28,10 @@ export class MenuPosition {
 
   @ManyToMany(() => Menu, (menu) => menu.menuPositions)
   menus: Menu[];
+
+  @OneToMany(
+    () => OrderToMenuPosition,
+    (orderToMenuPosition) => orderToMenuPosition.menuPosition,
+  )
+  menuPositionToOrder: OrderToMenuPosition[];
 }

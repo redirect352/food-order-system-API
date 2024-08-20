@@ -15,8 +15,8 @@ import { DishModule } from './dish/dish.module';
 import { MenuPositionModule } from './menu-position/menu-position.module';
 import { MenuModule } from './menu/menu.module';
 import { DishCategoryModule } from './dish-category/dish-category.module';
-
-console.log(join(__dirname, '..', '..', 'static'));
+import { OrderStatusModule } from './order/order-status/order-status.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -44,6 +44,8 @@ console.log(join(__dirname, '..', '..', 'static'));
     MenuPositionModule,
     MenuModule,
     DishCategoryModule,
+    OrderStatusModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],

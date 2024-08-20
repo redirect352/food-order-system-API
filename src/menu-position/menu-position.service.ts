@@ -39,7 +39,6 @@ export class MenuPositionService {
       })
       .execute()
       .catch((err) => {
-        console.log(err);
         if ((err.errno = 1452))
           throw new BadRequestException(
             'Ошибка добавления, связанного блюда не существует',

@@ -14,12 +14,10 @@ export class DishService {
   ) {}
   async createDish(createDishDto: CreateDishDto) {
     const { dishCategoryId, dishCategoryName } = createDishDto;
-    console.log(createDishDto);
     const categoryId =
       dishCategoryId ??
       (await this.dishCategoryService.getByName(dishCategoryName))?.id ??
       -1;
-    console.log({ dishCategoryId, dishCategoryName });
     if (dishCategoryName && categoryId === -1) {
       throw new BadRequestException(
         `Категории "${dishCategoryName}" не существует`,
@@ -47,7 +45,6 @@ export class DishService {
       })
       .execute()
       .catch((err) => {
-        console.log(err);
         if ((err.errno = 1452))
           throw new BadRequestException(
             'Ошибка добавления, изображения или филиала не существует в базе данных.',

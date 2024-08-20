@@ -43,7 +43,6 @@ export class MenuService {
   }
 
   async getActualMenuForUser(getUserMenuDto: GetUserMenuDto, userId?: number) {
-    console.log(getUserMenuDto);
     if (!userId) throw new UnauthorizedException();
     const canteenId = await this.userService.findUserServingCanteen(userId);
     const menuList = await this.menuPositionService.getActual(

@@ -1,10 +1,7 @@
-import {
-  Inject,
-  Injectable,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   registerDecorator,
+  ValidationArguments,
   ValidationOptions,
   ValidatorConstraint,
   ValidatorConstraintInterface,
@@ -16,26 +13,33 @@ import { MenuPositionService } from '../menu-position.service';
 export class IsMenuPositionsExistsConstraint
   implements ValidatorConstraintInterface
 {
+  private notExistIdList: number[] = [];
   constructor(
     @Inject() private readonly menuPositionService: MenuPositionService,
   ) {}
 
   async validate(idList: number[]): Promise<boolean> {
+    if (!idList) {
+      return false;
+    }
     const menuPositions = await this.menuPositionService.getMenuPositions(
       idList,
       ['id'],
     );
     if (!menuPositions || menuPositions.length !== idList.length) {
-      throw new UnprocessableEntityException(
-        `Позиции с id ${idList.filter(
-          (item) =>
-            menuPositions.findIndex((pos) => {
-              return pos.id === item;
-            }) === -1,
-        )} не существуют`,
+      this.notExistIdList = idList.filter(
+        (item) =>
+          menuPositions.findIndex((pos) => {
+            return pos.id === item;
+          }) === -1,
       );
+      return false;
     }
     return true;
+  }
+  defaultMessage(validationArguments?: ValidationArguments) {
+    if (!validationArguments.value) return 'Позиции меню не указаны';
+    return `Не все позиции с указанными id(${this.notExistIdList}) существуют`;
   }
 }
 
