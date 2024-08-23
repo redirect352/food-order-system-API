@@ -19,7 +19,7 @@ export class IsMenuPositionsExistsConstraint
   ) {}
 
   async validate(idList: number[]): Promise<boolean> {
-    if (!idList) {
+    if (!idList || idList.length === 0) {
       return false;
     }
     const menuPositions = await this.menuPositionService.getMenuPositions(

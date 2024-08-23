@@ -1,6 +1,6 @@
 import { IsInt, Min, IsString, MinLength, IsDateString } from 'class-validator';
 
-export class GetOrderFullInfoDto {
+export class OrderIdentificationDto {
   @IsString()
   @MinLength(10)
   @IsDateString()

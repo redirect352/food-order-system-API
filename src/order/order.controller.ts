@@ -1,18 +1,20 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
   Post,
   Query,
   Req,
+  Res,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { GetActiveOrdersDto } from './dto/get-active-orders.dto';
-import { GetOrderFullInfoDto } from './dto/get-order-full-info.dto';
+import { OrderIdentificationDto } from './dto/order-identification.dto';
 import { OrderFullInfoDto } from './dto/order-full-info.dto';
 
 @Roles('client')
@@ -27,16 +29,39 @@ export class OrderController {
 
   @Get('get/active')
   async getActive(@Query() getActiveOrdersDto: GetActiveOrdersDto, @Req() req) {
-    return this.orderService.getActive(getActiveOrdersDto, req.user.userId);
+    const { page, pageSize } = getActiveOrdersDto;
+    return this.orderService.getOrdersList(
+      true,
+      page,
+      pageSize,
+      req.user.userId,
+    );
   }
 
   @Get(':date/:number')
-  async findOne(@Param() getOrderFullInfoDto: GetOrderFullInfoDto, @Req() req) {
+  async findOne(
+    @Param() getOrderFullInfoDto: OrderIdentificationDto,
+    @Req() req,
+  ) {
     const { date, number } = getOrderFullInfoDto;
     const res = await this.orderService.getOrder(date, number, req.user.userId);
     if (!res) {
       throw new NotFoundException(`Заказ ${number}-${date} не найден`);
     }
     return new OrderFullInfoDto(res);
+  }
+
+  @Delete('/cancel/:date/:number')
+  async cancelOrder(
+    @Param() { number, date }: OrderIdentificationDto,
+    @Req() req,
+    @Res({ passthrough: true }) response,
+  ) {
+    const res = await this.orderService.cancelOrder(
+      number,
+      date,
+      req.user.userId,
+    );
+    if (res.affected === 0) response.status(304);
   }
 }

@@ -9,6 +9,12 @@ export class OrderStatus {
   @Column()
   name: string;
 
+  @Column({ default: true })
+  active: boolean;
+
+  @Column({ default: false })
+  canCancel: boolean;
+
   @OneToMany(() => Order, (order) => order.status, {
     eager: false,
   })

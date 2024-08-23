@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Repository, DataSource } from 'typeorm';
@@ -14,7 +15,6 @@ import { OrderStatus } from './order-status/order-status.entity';
 import { OrderToMenuPosition } from './order-to-menu-position/order-to-menu-position.entity';
 import { MenuPosition } from 'src/menu-position/menu-position.entity';
 import { OrderStatusService } from './order-status/order-status.service';
-import { GetActiveOrdersDto } from './dto/get-active-orders.dto';
 import { PriceService } from 'lib/helpers/price/price.service';
 import { OrderMainInfoDto } from './dto/order-main-info.dto';
 
@@ -119,8 +119,12 @@ export class OrderService {
     }
   }
 
-  async getActive(getActiveOrdersDto: GetActiveOrdersDto, userId: number) {
-    const { page, pageSize } = getActiveOrdersDto;
+  async getOrdersList(
+    active: boolean,
+    page: number,
+    pageSize: number,
+    userId: number,
+  ) {
     const res = await this.orderRepository
       .createQueryBuilder('order')
       .select()
@@ -129,16 +133,15 @@ export class OrderService {
       .leftJoinAndSelect('orderToMenuPosition.menuPosition', 'menuPosition')
       .leftJoinAndSelect('menuPosition.dish', 'dish')
       .where('clientId=:userId', { userId })
+      .andWhere('orderStatus.active=true')
+      .orderBy('order.created', 'DESC')
       .skip((page - 1) * pageSize)
       .take(pageSize)
       .getManyAndCount();
-    if (res.length > 0) {
-      return {
-        totalPages: Math.ceil(res[1] / pageSize),
-        items: res[0].map((item) => new OrderMainInfoDto(item)),
-      };
-    }
-    return [];
+    return {
+      totalPages: Math.ceil(res[1] / pageSize),
+      items: res[0].map((item) => new OrderMainInfoDto(item)),
+    };
   }
 
   async getOrder(issued: string, number: number, userId: string) {
@@ -149,10 +152,33 @@ export class OrderService {
       .leftJoinAndSelect('order.orderToMenuPosition', 'orderToMenuPosition')
       .leftJoinAndSelect('orderToMenuPosition.menuPosition', 'menuPosition')
       .leftJoinAndSelect('menuPosition.dish', 'dish')
+      .leftJoinAndSelect('dish.image', 'dishImage')
+      .leftJoinAndSelect('dish.providingCanteen', 'dishProducer')
+      .leftJoinAndSelect('dish.category', 'dishCategory')
       .where('issued=:issued', { issued })
       .andWhere('number=:number', { number })
       .andWhere('clientId=:userId', { userId })
       .getOne();
     return res;
+  }
+
+  async cancelOrder(number: number, issued: string, userId: string) {
+    const order = await this.orderRepository.findOne({
+      where: { number, issued, client: { id: +userId } },
+      relations: {
+        status: true,
+      },
+    });
+    if (!order) {
+      throw new NotFoundException(`Заказ ${number}-${issued} не найден`);
+    }
+    if (!order.status.canCancel) {
+      throw new ForbiddenException('Указанный заказ невозможно отменить');
+    }
+    return await this.orderRepository.delete({
+      number,
+      issued,
+      client: { id: +userId },
+    });
   }
 }

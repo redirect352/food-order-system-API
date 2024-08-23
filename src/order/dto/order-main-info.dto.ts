@@ -10,6 +10,7 @@ export class OrderMainInfoDto {
   public issued: string;
   public fullPrice: number;
   public status: string;
+  public canCancel: boolean;
   public updated: Date;
   public created: Date;
   public orderPositions: Array<OrderPositionMainInfo>;
@@ -21,6 +22,7 @@ export class OrderMainInfoDto {
     this.status = order.status.name;
     this.updated = order.updated;
     this.created = order.created;
+    this.canCancel = order.status.canCancel;
     this.orderPositions = order.orderToMenuPosition.map((pos) => ({
       count: pos.count,
       price: pos.menuPosition.price,
