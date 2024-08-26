@@ -120,12 +120,12 @@ export class OrderService {
   }
 
   async getOrdersList(
-    active: boolean,
     page: number,
     pageSize: number,
     userId: number,
+    active?: number,
   ) {
-    const res = await this.orderRepository
+    const query = this.orderRepository
       .createQueryBuilder('order')
       .select()
       .leftJoinAndSelect('order.status', 'orderStatus')
@@ -133,11 +133,13 @@ export class OrderService {
       .leftJoinAndSelect('orderToMenuPosition.menuPosition', 'menuPosition')
       .leftJoinAndSelect('menuPosition.dish', 'dish')
       .where('clientId=:userId', { userId })
-      .andWhere('orderStatus.active=true')
       .orderBy('order.created', 'DESC')
       .skip((page - 1) * pageSize)
-      .take(pageSize)
-      .getManyAndCount();
+      .take(pageSize);
+    if (active !== undefined) {
+      query.andWhere('orderStatus.active=:active', { active });
+    }
+    const res = await query.getManyAndCount();
     return {
       totalPages: Math.ceil(res[1] / pageSize),
       items: res[0].map((item) => new OrderMainInfoDto(item)),

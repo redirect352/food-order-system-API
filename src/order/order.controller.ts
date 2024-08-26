@@ -13,7 +13,7 @@ import {
 import { OrderService } from './order.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { GetActiveOrdersDto } from './dto/get-active-orders.dto';
+import { GetOrdersListDto } from './dto/get-orders-list.dto';
 import { OrderIdentificationDto } from './dto/order-identification.dto';
 import { OrderFullInfoDto } from './dto/order-full-info.dto';
 
@@ -27,14 +27,14 @@ export class OrderController {
     return this.orderService.createOrder(createOrderDto, req.user.userId);
   }
 
-  @Get('get/active')
-  async getActive(@Query() getActiveOrdersDto: GetActiveOrdersDto, @Req() req) {
-    const { page, pageSize } = getActiveOrdersDto;
+  @Get('list')
+  async getList(@Query() getActiveOrdersDto: GetOrdersListDto, @Req() req) {
+    const { page, pageSize, active } = getActiveOrdersDto;
     return this.orderService.getOrdersList(
-      true,
       page,
       pageSize,
       req.user.userId,
+      active,
     );
   }
 
