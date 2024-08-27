@@ -1,5 +1,12 @@
 import { BranchOffice } from 'src/branch-office/branch-office.entity';
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { User } from 'src/user/user.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToOne,
+} from 'typeorm';
 
 @Entity()
 export class Employee {
@@ -19,4 +26,7 @@ export class Employee {
   office: BranchOffice;
   @Column()
   active: boolean;
+
+  @OneToOne(() => User, (user) => user.employeeBasicData)
+  user?: User;
 }

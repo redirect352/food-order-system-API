@@ -22,7 +22,7 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToOne(() => Employee, (branchOffice) => branchOffice, {
+  @OneToOne(() => Employee, (employee) => employee.user, {
     nullable: false,
     eager: true,
   })

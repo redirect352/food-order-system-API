@@ -16,6 +16,7 @@ import { EmailBuilderModule } from 'lib/helpers/email-builder/email-builder.modu
 import { PasswordResetStrategy } from './strategies/password-reset.strategy';
 import { TimeCheckerModule } from 'lib/helpers/time-checker/time-checker.module';
 import { LocalEmailStrategy } from './strategies/local-email.strategy';
+import { EmployeeModule } from 'src/employee/employee.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { LocalEmailStrategy } from './strategies/local-email.strategy';
     CryptoModule,
     EmailBuilderModule,
     TimeCheckerModule,
+    EmployeeModule,
   ],
   controllers: [AuthController],
   providers: [

@@ -2,10 +2,12 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   NotFoundException,
   Patch,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -23,12 +25,15 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateCredentialsDto } from './dto/update-credentials.dto';
 import * as DeviceDetector from 'device-detector-js';
 import { RealIP } from 'nestjs-real-ip';
+import { CheckEmployeeDto } from './dto/check-employee.dto';
+import { EmployeeService } from 'src/employee/employee.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
+    private readonly employeeService: EmployeeService,
     private validateEmailStrategy: ValidateEmailStrategy,
     private passwordResetStrategy: PasswordResetStrategy,
     private readonly timeCheckerService: TimeCheckerService,
@@ -156,5 +161,11 @@ export class AuthController {
       },
       statusCode: 200,
     };
+  }
+  @Get('/sign-up/check-employee')
+  async checkOnRegister(@Query() checkEmployeeDto: CheckEmployeeDto) {
+    return await this.employeeService.checkEmployeeCanRegister(
+      checkEmployeeDto,
+    );
   }
 }
