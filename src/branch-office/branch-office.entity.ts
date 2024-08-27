@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Employee } from 'src/employee/employee.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 
 @Entity()
 export class BranchOffice {
@@ -12,4 +19,6 @@ export class BranchOffice {
   isCanteen: boolean;
   @ManyToOne(() => BranchOffice, (branchOffice) => branchOffice)
   servingCanteen: BranchOffice;
+  @OneToMany(() => Employee, (employee) => employee.office)
+  employees: Employee;
 }

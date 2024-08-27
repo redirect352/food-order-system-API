@@ -8,21 +8,29 @@ import {
 } from 'class-validator';
 import { isBranchOfficeExists } from '../validators/branch-office-exists.validator';
 
-export class CreateBranchOfficeDto {
+export class UpdateBranchOfficeDto {
+  @IsInt()
+  @Min(1)
+  @isBranchOfficeExists()
+  officeId: number;
+
+  @IsOptional()
   @IsString()
   @MinLength(3)
-  name: string;
+  name?: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(3)
-  address: string;
+  address?: string;
 
+  @IsOptional()
   @IsIn([0, 1])
-  isCanteen: number;
+  isCanteen?: number;
 
   @IsOptional()
   @IsInt()
   @Min(1)
   @isBranchOfficeExists({ checkOnCanteen: true })
-  servingCanteenId: number;
+  servingCanteenId?: number;
 }

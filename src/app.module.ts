@@ -17,6 +17,7 @@ import { MenuModule } from './menu/menu.module';
 import { DishCategoryModule } from './dish-category/dish-category.module';
 import { OrderStatusModule } from './order/order-status/order-status.module';
 import { OrderModule } from './order/order.module';
+import { EmployeeModule } from './employee/employee.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { OrderModule } from './order/order.module';
     DishCategoryModule,
     OrderStatusModule,
     OrderModule,
+    EmployeeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
