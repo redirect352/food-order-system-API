@@ -1,11 +1,12 @@
-import { BranchOffice } from 'src/branch-office/branch-office.entity';
+import { Employee } from 'src/employee/employee.entity';
 import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
+  OneToOne,
+  JoinColumn,
 } from 'typeorm';
 
 export type UserRole =
@@ -21,17 +22,12 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  firstName: string;
-
-  @Column()
-  lastName: string;
-
-  @Column({ nullable: true })
-  patronymic: string;
-
-  @Column()
-  personnelNumber: string;
+  @OneToOne(() => Employee, (branchOffice) => branchOffice, {
+    nullable: false,
+    eager: true,
+  })
+  @JoinColumn()
+  employeeBasicData: Employee;
 
   @Column({ unique: true })
   login: string;
@@ -64,12 +60,6 @@ export class User {
     default: 'client',
   })
   role: UserRole;
-
-  @ManyToOne(() => BranchOffice, (branchOffice) => branchOffice, {
-    nullable: false,
-    eager: true,
-  })
-  office: BranchOffice;
 
   @CreateDateColumn()
   registered: Date;

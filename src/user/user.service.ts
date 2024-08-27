@@ -14,7 +14,10 @@ export class UserService {
   ) {}
 
   async findUser(where: FindOptionsWhere<User> | FindOptionsWhere<User>[]) {
-    return await this.usersRepository.findOneBy(where);
+    return await this.usersRepository.findOne({
+      where,
+      relations: { employeeBasicData: { office: true } },
+    });
   }
 
   async findByLogin(login: string) {
@@ -26,7 +29,8 @@ export class UserService {
   async findUserServingCanteen(id: number): Promise<number> {
     const res = await this.usersRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect('user.office', 'userOffice')
+      .leftJoinAndSelect('user.employeeBasicData', 'employee')
+      .leftJoinAndSelect('employee.office', 'userOffice')
       .select(['userOffice.servingCanteenId'])
       .where('user.id=:userId', { userId: id })
       .execute();

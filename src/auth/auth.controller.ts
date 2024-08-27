@@ -148,9 +148,9 @@ export class AuthController {
     return {
       user: {
         name: {
-          firstName: user.firstName,
-          lastName: user.lastName,
-          patronymic: user.patronymic,
+          firstName: user.employeeBasicData.name,
+          lastName: user.employeeBasicData.surname,
+          patronymic: user.employeeBasicData.patronymic,
         },
         login: user.login,
       },

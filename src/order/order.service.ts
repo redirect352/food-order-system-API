@@ -63,7 +63,8 @@ export class OrderService {
           const subQuery = qb
             .subQuery()
             .from(User, 'user')
-            .leftJoinAndSelect('user.office', 'userOffice')
+            .leftJoinAndSelect('user.employeeBasicData', 'employee')
+            .leftJoinAndSelect('employee.office', 'UserOffice')
             .select(['userOffice.servingCanteenId as canteenId'])
             .where('user.id = :userId', { userId })
             .getQuery();

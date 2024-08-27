@@ -18,9 +18,11 @@ export class AuthService {
     password: string,
   ) {
     if (!login && !email) return null;
-    const user = login
-      ? await this.userService.findByLogin(login)
-      : await await this.userService.findUser({ email });
+    const user = await await this.userService.findUser({
+      login,
+      email,
+      employeeBasicData: { active: true },
+    });
     if (
       user &&
       (await this.cryptoService.comparePassword(password, user.password))
