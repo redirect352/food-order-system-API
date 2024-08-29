@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Body,
   Controller,
-  ForbiddenException,
   Get,
   NotFoundException,
   Patch,
@@ -27,6 +26,7 @@ import * as DeviceDetector from 'device-detector-js';
 import { RealIP } from 'nestjs-real-ip';
 import { CheckEmployeeDto } from './dto/check-employee.dto';
 import { EmployeeService } from 'src/employee/employee.service';
+import { SignUpDto } from './dto/sign-up.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -44,20 +44,7 @@ export class AuthController {
   async signIn(@Req() req, @Res() res, @RealIP() ip: string) {
     const user: User = req.user;
     if (user.isPasswordTemporary) {
-      if (
-        user.verificationEmailSendTime &&
-        new Date().getTime() - user.verificationEmailSendTime.getTime() <=
-          1000 * 60 * 5
-      ) {
-        throw new BadRequestException(
-          'Повторная отправка письма активации возможна только через 5 минут после прошлой попытки',
-        );
-      }
-      req.body.destination = user.email;
-      req.body.id = user.id;
-      delete req.body.password;
-      delete req.body.login;
-      this.validateEmailStrategy.send(req, res);
+      await this.authService.sendVerificationEmailToUser(user, req, res);
       return;
     }
     const result = await this.authService.login(req.user);
@@ -150,6 +137,10 @@ export class AuthController {
   @Get('/check-first-auth-token')
   async checkFirstAuthToken(@Req() req) {
     const user: User = req.user;
+    await this.userService.updateUser(
+      { id: user.id },
+      { isPasswordTemporary: false },
+    );
     return {
       user: {
         name: {
@@ -167,5 +158,10 @@ export class AuthController {
     return await this.employeeService.checkEmployeeCanRegister(
       checkEmployeeDto,
     );
+  }
+  @Post('/sign-up/')
+  async registerUser(@Body() signUpDto: SignUpDto, @Req() req, @Res() res) {
+    const user = await this.authService.register(signUpDto);
+    return await this.authService.sendVerificationEmailToUser(user, req, res);
   }
 }

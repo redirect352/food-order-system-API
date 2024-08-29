@@ -1,9 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
-import { FindOptionsWhere, ObjectId, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, ObjectId, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { CryptoService } from 'lib/helpers/crypto/crypto.service';
+import { SignUpDto } from 'src/auth/dto/sign-up.dto';
+import { Employee } from 'src/employee/employee.entity';
+import { BranchOffice } from 'src/branch-office/branch-office.entity';
 
 @Injectable()
 export class UserService {
@@ -11,7 +20,9 @@ export class UserService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private readonly cryptoService: CryptoService,
+    private dataSource: DataSource,
   ) {}
+  private readonly logger = new Logger(UserService.name);
 
   async findUser(where: FindOptionsWhere<User> | FindOptionsWhere<User>[]) {
     return await this.usersRepository.findOne({
@@ -73,5 +84,53 @@ export class UserService {
     return await this.usersRepository.update(criteria, {
       password: await this.cryptoService.hashPassword(newPassword),
     });
+  }
+
+  async register(signUpDto: SignUpDto) {
+    const { surname, email, login, password, personnelNumber, officeId } =
+      signUpDto;
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
+    try {
+      const employee = await queryRunner.manager
+        .getRepository(Employee)
+        .findOne({
+          where: {
+            surname,
+            personnelNumber,
+            office: { ...new BranchOffice(), id: officeId },
+            user: null,
+            active: true,
+          },
+        });
+      if (!employee) {
+        throw new ForbiddenException(
+          'Невозможно создать аккаунт. Указанный сотрудник не существует либо уже зарегистрирован',
+        );
+      }
+      const customer = new User();
+      customer.email = email;
+      customer.login = login;
+      customer.role = 'client';
+      customer.password = password;
+      customer.isPasswordTemporary = true;
+      customer.employeeBasicData = employee;
+      const user = await queryRunner.manager.getRepository(User).save(customer);
+      await queryRunner.commitTransaction();
+      return user;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      if (err?.status) throw err;
+      if (err?.errno === 1062) {
+        throw new ForbiddenException(
+          'Невозможно создать аккаунт. Указанный логин или email уже занят',
+        );
+      }
+      console.log(err);
+      this.logger.error(err);
+      throw new BadRequestException(err.message);
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

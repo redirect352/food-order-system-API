@@ -9,7 +9,7 @@ export class UserController {
   @Get()
   @Roles('client', 'admin', 'menuModerator', 'orderIssuing', 'deliveryman')
   async getUserInfo(@Req() req) {
-    const user = await this.userService.findUser({ id: req.user.id });
+    const user = await this.userService.findUser({ id: req.user.userId });
     if (!user) {
       throw new NotFoundException('Пользователь не найден');
     }

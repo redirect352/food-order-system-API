@@ -39,7 +39,7 @@ export class ValidateEmailStrategy extends PassportStrategy(
           { email: destination },
           { verificationEmailSendTime: new Date() },
         );
-        this.logger.debug(`sending email to ${destination} with Link ${href}`);
+        // this.logger.debug(`sending email to ${destination} with Link ${href}`);
       },
       verify: async (payload, callback) =>
         callback(null, this.validate(payload)),
