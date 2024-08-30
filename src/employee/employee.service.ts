@@ -29,7 +29,7 @@ export class EmployeeService {
       .leftJoinAndSelect('employee.user', 'user')
       .where('employee.officeId=:officeId', { officeId })
       .andWhere('employee.active=true')
-      .andWhere('employee.surname=:surname', { surname })
+      .andWhere('employee.surname like :surname', { surname })
       .andWhere('employee.personnelNumber=:personnelNumber', {
         personnelNumber,
       })
