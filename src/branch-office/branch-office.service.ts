@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBranchOfficeDto } from './dto/create-branch-office.dto';
 import { UpdateBranchOfficeDto } from './dto/update-branch-office.dto';
+import { GetBranchOfficeDto } from './dto/get-office.dto';
 
 @Injectable()
 export class BranchOfficeService {
@@ -48,6 +49,13 @@ export class BranchOfficeService {
   async getRegistrationList() {
     return await this.branchOfficeRepository.find({
       where: { isCanteen: false },
+    });
+  }
+
+  async getBranchOffice(getBranchOfficeDto: GetBranchOfficeDto) {
+    const { name } = getBranchOfficeDto;
+    return await this.branchOfficeRepository.findOne({
+      where: { name },
     });
   }
 }
