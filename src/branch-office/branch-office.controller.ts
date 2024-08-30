@@ -3,7 +3,6 @@ import {
   Body,
   Controller,
   Get,
-  NotFoundException,
   Patch,
   Post,
 } from '@nestjs/common';

@@ -6,17 +6,19 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   OneToOne,
+  Index,
 } from 'typeorm';
 
+@Index(['surname', 'personnelNumber', 'office'], { unique: true })
 @Entity()
 export class Employee {
   @PrimaryGeneratedColumn()
   id: number;
   @Column()
   surname: string;
-  @Column()
+  @Column({ default: '-' })
   name: string;
-  @Column()
+  @Column({ default: '-' })
   patronymic: string;
   @Column()
   personnelNumber: string;
