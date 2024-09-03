@@ -17,6 +17,7 @@ import { MenuPosition } from 'src/menu-position/menu-position.entity';
 import { OrderStatusService } from './order-status/order-status.service';
 import { PriceService } from 'lib/helpers/price/price.service';
 import { OrderMainInfoDto } from './dto/order-main-info.dto';
+import { env } from 'process';
 
 @Injectable()
 export class OrderService {
@@ -183,5 +184,22 @@ export class OrderService {
       issued,
       client: { id: +userId },
     });
+  }
+
+  async getTotalForPeriod(periodStart: Date, periodEnd: Date, userId: string) {
+    return await this.orderRepository
+      .createQueryBuilder('order')
+      .innerJoin('order.status', 'orderStatus')
+      .select([
+        'Count(*) as totalCount',
+        'IFNULL(Sum(order.fullPrice), 0) as totalPrice',
+      ])
+      .where('order.created >= :periodStart', { periodStart })
+      .andWhere('order.created <= :periodEnd', { periodEnd })
+      .andWhere('order.clientId=:userId', { userId })
+      .andWhere('orderStatus.name=:statusClosed', {
+        statusClosed: env.ORDER_CLOSED_STATUS,
+      })
+      .execute();
   }
 }

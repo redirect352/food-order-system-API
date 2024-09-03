@@ -16,6 +16,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { GetOrdersListDto } from './dto/get-orders-list.dto';
 import { OrderIdentificationDto } from './dto/order-identification.dto';
 import { OrderFullInfoDto } from './dto/order-full-info.dto';
+import { GetTotalDto } from './dto/get-total.dto';
 
 @Roles('client')
 @Controller('order')
@@ -49,6 +50,25 @@ export class OrderController {
       throw new NotFoundException(`Заказ ${number}-${date} не найден`);
     }
     return new OrderFullInfoDto(res);
+  }
+  @Get('/total/')
+  async getMonthTotal(@Query() getTotalDto: GetTotalDto, @Req() req) {
+    const { periodEnd, periodStart } = getTotalDto;
+    const now = new Date();
+    const start =
+      periodStart ?? new Date(now.getFullYear(), now.getUTCMonth(), 1);
+    const res = await this.orderService.getTotalForPeriod(
+      start,
+      periodEnd,
+      req.user.userId,
+    );
+    return {
+      period: {
+        start,
+        end: periodEnd,
+      },
+      ...res[0],
+    };
   }
 
   @Delete('/cancel/:date/:number')
