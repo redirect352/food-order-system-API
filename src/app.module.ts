@@ -8,7 +8,7 @@ import { ImageModule } from './image/image.module';
 import { UserModule } from './user/user.module';
 import { BranchOfficeModule } from './branch-office/branch-office.module';
 import { AuthModule } from './auth/auth.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CryptoModule } from '../lib/helpers/crypto/crypto.module';
 import { EmailBuilderModule } from '../lib/helpers/email-builder/email-builder.module';
 import { DishModule } from './dish/dish.module';
@@ -21,15 +21,21 @@ import { EmployeeModule } from './employee/employee.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: 'root',
-      database: 'food-order-system',
-      autoLoadEntities: true,
-      synchronize: true,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        return {
+          type: 'mysql',
+          host: configService.get('DB_HOST'),
+          port: configService.get<number>('DB_PORT'),
+          username: configService.get('DB_USERNAME'),
+          password: configService.get('DB_PASSWORD'),
+          database: configService.get('DB_NAME'),
+          autoLoadEntities: true,
+          synchronize: true,
+        };
+      },
+      inject: [ConfigService],
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'static'),
