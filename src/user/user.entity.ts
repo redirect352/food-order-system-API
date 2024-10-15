@@ -1,4 +1,3 @@
-import { Employee } from 'src/employee/employee.entity';
 import {
   Entity,
   Column,
@@ -8,6 +7,7 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
+import { Employee } from '../employee/employee.entity';
 
 export type UserRole =
   | 'client'

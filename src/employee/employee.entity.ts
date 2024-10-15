@@ -1,5 +1,3 @@
-import { BranchOffice } from 'src/branch-office/branch-office.entity';
-import { User } from 'src/user/user.entity';
 import {
   Entity,
   Column,
@@ -8,6 +6,8 @@ import {
   OneToOne,
   Index,
 } from 'typeorm';
+import { BranchOffice } from '../branch-office/branch-office.entity';
+import { User } from '../user/user.entity';
 
 @Index(['surname', 'personnelNumber', 'office'], { unique: true })
 @Entity()

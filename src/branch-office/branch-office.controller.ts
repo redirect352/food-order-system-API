@@ -7,14 +7,13 @@ import {
   Param,
   Patch,
   Post,
-  Query,
 } from '@nestjs/common';
 import { BranchOfficeService } from './branch-office.service';
-import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CreateBranchOfficeDto } from './dto/create-branch-office.dto';
 import { UpdateBranchOfficeDto } from './dto/update-branch-office.dto';
-import { Public } from 'src/auth/decorators/public.decorator';
 import { GetBranchOfficeDto } from './dto/get-office.dto';
+import { Public } from '../auth/decorators/public.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @Roles('admin')
 @Controller('branch-office')
