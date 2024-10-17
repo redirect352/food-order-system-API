@@ -8,7 +8,6 @@ import {
   Post,
   Query,
   Req,
-  Res,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -31,6 +30,8 @@ export class OrderController {
   @Get('list')
   async getList(@Query() getActiveOrdersDto: GetOrdersListDto, @Req() req) {
     const { page, pageSize, active } = getActiveOrdersDto;
+    console.log(getActiveOrdersDto);
+
     return this.orderService.getOrdersList(
       page,
       pageSize,
@@ -67,7 +68,8 @@ export class OrderController {
         start,
         end: periodEnd,
       },
-      ...res[0],
+      totalCount: res._count,
+      totalPrice: res._sum.fullPrice ?? 0,
     };
   }
 
@@ -75,13 +77,7 @@ export class OrderController {
   async cancelOrder(
     @Param() { number, date }: OrderIdentificationDto,
     @Req() req,
-    @Res({ passthrough: true }) response,
   ) {
-    const res = await this.orderService.cancelOrder(
-      number,
-      date,
-      req.user.userId,
-    );
-    if (res.affected === 0) response.status(304);
+    await this.orderService.cancelOrder(number, date, req.user.userId);
   }
 }

@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { User } from './user.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { CryptoModule } from 'lib/helpers/crypto/crypto.module';
+import { DatabaseModule } from '../database/database.module';
+import { EmployeeModule } from '../employee/employee.module';
+import { BranchOfficeModule } from '../branch-office/branch-office.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), CryptoModule],
+  imports: [CryptoModule, DatabaseModule, EmployeeModule, BranchOfficeModule],
   controllers: [UserController],
   providers: [UserService],
   exports: [UserService],

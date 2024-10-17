@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
 import { DishService } from './dish.service';
 import { DishController } from './dish.controller';
-import { Dish } from './dish.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { IsDishExistsConstraint } from './validators/dish-exists.validator';
 import { DishCategoryModule } from 'src/dish-category/dish-category.module';
+import { DatabaseModule } from '../database/database.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Dish]), DishCategoryModule],
+  imports: [DishCategoryModule, DatabaseModule],
   exports: [DishService],
   controllers: [DishController],
   providers: [DishService, IsDishExistsConstraint],

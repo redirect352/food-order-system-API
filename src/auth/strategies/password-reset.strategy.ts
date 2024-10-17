@@ -36,11 +36,10 @@ export class PasswordResetStrategy extends PassportStrategy(
             RESET_LINK: href,
           }),
         });
-        await userService.updateUser(
-          { email: destination },
-          { lastPasswordResetTime: new Date() },
-        );
-        this.logger.debug(`sending email to ${destination} with Link ${href}`);
+        await userService.updateUserByEmail(destination, {
+          lastPasswordResetTime: new Date(),
+        });
+        // this.logger.debug(`sending email to ${destination} with Link ${href}`);
       },
       verify: async (payload, callback) =>
         callback(null, this.validate(payload)),

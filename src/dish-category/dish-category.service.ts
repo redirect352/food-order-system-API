@@ -1,19 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { DishCategory } from './dish-category.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class DishCategoryService {
-  constructor(
-    @InjectRepository(DishCategory)
-    private dishCategoryRepository: Repository<DishCategory>,
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
   async getById(id: number) {
-    return await this.dishCategoryRepository.findOne({ where: { id } });
+    return this.prismaService.dish_category.findUnique({ where: { id } });
   }
   async getByName(name?: string) {
     if (!name) return null;
-    return await this.dishCategoryRepository.findOne({ where: { name } });
+    return await this.prismaService.dish_category.findFirst({
+      where: { name },
+    });
   }
 }

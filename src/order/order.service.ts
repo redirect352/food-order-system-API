@@ -1,205 +1,248 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { Repository, DataSource } from 'typeorm';
-import { Order } from './order.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import * as moment from 'moment';
-import { User } from 'src/user/user.entity';
-import { OrderStatus } from './order-status/order-status.entity';
-import { OrderToMenuPosition } from './order-to-menu-position/order-to-menu-position.entity';
-import { MenuPosition } from 'src/menu-position/menu-position.entity';
-import { OrderStatusService } from './order-status/order-status.service';
 import { PriceService } from 'lib/helpers/price/price.service';
 import { OrderMainInfoDto } from './dto/order-main-info.dto';
 import { env } from 'process';
+import { PrismaService } from '../database/prisma.service';
+import { MenuPositionService } from '../menu-position/menu-position.service';
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class OrderService {
   constructor(
-    @InjectRepository(Order) private orderRepository: Repository<Order>,
-    private dataSource: DataSource,
-    private readonly orderStatusService: OrderStatusService,
     private readonly priceService: PriceService,
+    private readonly prismaService: PrismaService,
+    private readonly menuPositionService: MenuPositionService,
   ) {}
   private readonly logger = new Logger(OrderService.name);
 
   async createOrder(createOrderDto: CreateOrderDto, userId: number) {
-    const date = moment().format('YYYY-MM-DD');
     const { menuPositions, counts: menuPositionCounts } = createOrderDto;
     const defaultOrderStatus = process.env.ORDER_CREATED_STATUS;
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.startTransaction();
-    try {
-      const num = await queryRunner.manager
-        .getRepository(Order)
-        .createQueryBuilder()
-        .useTransaction(true)
-        .setLock('pessimistic_write')
-        .select('Max(number)', 'max')
-        .where('issued = :date', { date })
-        .getRawOne();
-      if (!num) {
-        throw new BadRequestException();
-      }
-      const number = num.max + 1;
 
-      const now = new Date();
-      const positions = await queryRunner.manager
-        .getRepository(MenuPosition)
-        .createQueryBuilder('menuPosition')
-        .leftJoin('menuPosition.menus', 'menu')
-        .select(['menuPosition.id as id', 'price', 'discount'])
-        .where('menu.expire > :date', { date: now })
-        .andWhere('menu.relevantFrom <= :dateFrom', { dateFrom: now })
-        .andWhere('menuPosition.id in (:idList)', {
-          idList: menuPositions,
-        })
-        .andWhere((qb) => {
-          const subQuery = qb
-            .subQuery()
-            .from(User, 'user')
-            .leftJoinAndSelect('user.employeeBasicData', 'employee')
-            .leftJoinAndSelect('employee.office', 'UserOffice')
-            .select(['userOffice.servingCanteenId as canteenId'])
-            .where('user.id = :userId', { userId })
-            .getQuery();
-          return 'menu.providingCanteenId = ' + subQuery;
-        })
-        .getRawMany();
-      if (positions.length !== menuPositions.length) {
+    const res = await this.prismaService.$transaction(async (tx) => {
+      const res =
+        await this.menuPositionService.checkMenuPositionsAvailableForUser(
+          userId,
+          menuPositions,
+          tx as PrismaClient,
+        );
+      if (!res.status) {
         throw new ForbiddenException(
           'Выбранные пункты меню недоступны для заказа. Обновите меню',
         );
       }
-      const order: Order = new Order();
-      order.client = { id: userId, ...new User() };
-      order.number = number;
-      order.issued = date;
-      order.fullPrice = this.priceService.getFullPrice(
-        positions.map((pos) => ({
+      const orderNumber =
+        (await this.getMaxOrderNumber(new Date(), tx as PrismaClient)) + 1;
+      const fullPrice = this.priceService.getFullPrice(
+        res.positions.map((pos) => ({
           price: pos.price,
           discount: pos.discount,
           count:
             menuPositionCounts[menuPositions.findIndex((id) => id === pos.id)],
         })),
       );
-      order.status = (await this.orderStatusService.getByName(
-        defaultOrderStatus,
-        queryRunner.manager.getRepository(OrderStatus),
-      )) ?? {
-        ...new OrderStatus(),
-        name: defaultOrderStatus,
-      };
-      const savedOrder = await queryRunner.manager.save(order);
-      const promises = createOrderDto.menuPositions.map((item, index) => {
-        const link = new OrderToMenuPosition();
-        link.orderId = savedOrder.id;
-        link.menuPositionId = item;
-        link.count = menuPositionCounts[index];
-        return queryRunner.manager.save(link);
-      });
-      savedOrder.orderToMenuPosition = await Promise.all(promises);
-      const final = await queryRunner.manager.save(savedOrder);
-      await queryRunner.commitTransaction();
+      const order = await this.createOrderDB(
+        {
+          orderNumber,
+          issued: new Date(),
+          fullPrice: fullPrice,
+          status: defaultOrderStatus,
+          userId,
+        },
+        tx as PrismaClient,
+      );
+      await this.createMenuPositionsToOrderRelations(
+        {
+          orderId: order.id,
+          menuPositionsCounts: menuPositionCounts,
+          menuPositionsIds: menuPositions,
+        },
+        tx as PrismaClient,
+      );
       return {
-        number: final.number,
-        status: final.status,
-        fullPrice: final.fullPrice,
+        number: order.number,
+        status: defaultOrderStatus,
+        fullPrice: order.fullPrice,
       };
-    } catch (err) {
-      this.logger.error(err);
-      await queryRunner.rollbackTransaction();
-      throw new BadRequestException(err.message);
-    } finally {
-      await queryRunner.release();
-    }
+    });
+    return res;
   }
 
   async getOrdersList(
     page: number,
     pageSize: number,
     userId: number,
-    active?: number,
+    active?: boolean,
   ) {
-    const query = this.orderRepository
-      .createQueryBuilder('order')
-      .select()
-      .leftJoinAndSelect('order.status', 'orderStatus')
-      .leftJoinAndSelect('order.orderToMenuPosition', 'orderToMenuPosition')
-      .leftJoinAndSelect('orderToMenuPosition.menuPosition', 'menuPosition')
-      .leftJoinAndSelect('menuPosition.dish', 'dish')
-      .where('clientId=:userId', { userId })
-      .orderBy('order.created', 'DESC')
-      .skip((page - 1) * pageSize)
-      .take(pageSize);
-    if (active !== undefined) {
-      query.andWhere('orderStatus.active=:active', { active });
-    }
-    const res = await query.getManyAndCount();
+    const items = await this.prismaService.order.findMany({
+      omit: {
+        id: true,
+        statusId: true,
+        clientId: true,
+      },
+      include: {
+        order_status: true,
+        order_to_menu_position: {
+          include: {
+            menu_position: { include: { dish: { select: { name: true } } } },
+          },
+        },
+      },
+      orderBy: { created: 'desc' },
+      where: { clientId: userId, order_status: { active: active } },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+    const count = await await this.prismaService.order.count({
+      where: { clientId: userId, order_status: { active: active } },
+    });
     return {
-      totalPages: Math.ceil(res[1] / pageSize),
-      items: res[0].map((item) => new OrderMainInfoDto(item)),
+      totalPages: Math.ceil(count / pageSize),
+      items: items.map((item) => new OrderMainInfoDto(item)),
     };
   }
 
   async getOrder(issued: string, number: number, userId: string) {
-    const res = await this.orderRepository
-      .createQueryBuilder('order')
-      .select()
-      .leftJoinAndSelect('order.status', 'orderStatus')
-      .leftJoinAndSelect('order.orderToMenuPosition', 'orderToMenuPosition')
-      .leftJoinAndSelect('orderToMenuPosition.menuPosition', 'menuPosition')
-      .leftJoinAndSelect('menuPosition.dish', 'dish')
-      .leftJoinAndSelect('dish.image', 'dishImage')
-      .leftJoinAndSelect('dish.providingCanteen', 'dishProducer')
-      .leftJoinAndSelect('dish.category', 'dishCategory')
-      .where('issued=:issued', { issued })
-      .andWhere('number=:number', { number })
-      .andWhere('clientId=:userId', { userId })
-      .getOne();
-    return res;
+    return await this.prismaService.order.findFirst({
+      omit: {
+        id: true,
+        statusId: true,
+        clientId: true,
+      },
+      include: {
+        order_status: true,
+        order_to_menu_position: {
+          include: {
+            menu_position: {
+              omit: { dishId: true },
+              include: {
+                dish: {
+                  omit: {
+                    imageId: true,
+                    categoryId: true,
+                    providingCanteenId: true,
+                  },
+                  include: {
+                    image: { select: { name: true, path: true } },
+                    providingCanteen: {
+                      select: {
+                        name: true,
+                        address: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      where: {
+        issued: new Date(issued),
+        number,
+        clientId: +userId,
+      },
+    });
   }
 
   async cancelOrder(number: number, issued: string, userId: string) {
-    const order = await this.orderRepository.findOne({
-      where: { number, issued, client: { id: +userId } },
-      relations: {
-        status: true,
+    const order = await this.prismaService.order.findFirst({
+      where: {
+        issued: new Date(issued),
+        number,
+        clientId: +userId,
       },
+      include: { order_status: true },
     });
     if (!order) {
       throw new NotFoundException(`Заказ ${number}-${issued} не найден`);
     }
-    if (!order.status.canCancel) {
+    if (!order.order_status.canCancel) {
       throw new ForbiddenException('Указанный заказ невозможно отменить');
     }
-    return await this.orderRepository.delete({
-      number,
-      issued,
-      client: { id: +userId },
+    return await this.prismaService.order.delete({
+      where: { id: order.id },
     });
   }
 
   async getTotalForPeriod(periodStart: Date, periodEnd: Date, userId: string) {
-    return await this.orderRepository
-      .createQueryBuilder('order')
-      .innerJoin('order.status', 'orderStatus')
-      .select([
-        'Count(*) as totalCount',
-        'IFNULL(Sum(order.fullPrice), 0) as totalPrice',
-      ])
-      .where('order.created >= :periodStart', { periodStart })
-      .andWhere('order.created <= :periodEnd', { periodEnd })
-      .andWhere('order.clientId=:userId', { userId })
-      .andWhere('orderStatus.name=:statusClosed', {
-        statusClosed: env.ORDER_CLOSED_STATUS,
-      })
-      .execute();
+    return await this.prismaService.order.aggregate({
+      _sum: {
+        fullPrice: true,
+      },
+      _count: true,
+      where: {
+        created: { gte: periodStart, lte: periodEnd },
+        clientId: +userId,
+        order_status: {
+          name: env.ORDER_CLOSED_STATUS,
+        },
+      },
+    });
+  }
+
+  async getMaxOrderNumber(orderDate: Date, prismaClient: PrismaClient) {
+    const orderNumber = await prismaClient.order.aggregate({
+      _max: {
+        number: true,
+      },
+      where: {
+        issued: new Date(),
+      },
+    });
+    return orderNumber._max.number;
+  }
+  async createOrderDB(
+    data: {
+      orderNumber: number;
+      issued: Date;
+      fullPrice: number;
+      status: string;
+      userId: number;
+    },
+    prismaClient: PrismaClient = this.prismaService,
+  ) {
+    return await prismaClient.order.create({
+      data: {
+        number: data.orderNumber,
+        issued: data.issued,
+        fullPrice: data.fullPrice,
+        order_status: {
+          connect: {
+            name: data.status,
+          },
+        },
+        user: {
+          connect: { id: data.userId },
+        },
+      },
+    });
+  }
+
+  async createMenuPositionsToOrderRelations(
+    data: {
+      menuPositionsIds: number[];
+      menuPositionsCounts: number[];
+      orderId: number;
+    },
+    prismaClient: PrismaClient = this.prismaService,
+  ) {
+    const { menuPositionsCounts, menuPositionsIds, orderId } = data;
+    const promises = menuPositionsIds.map((item, index) =>
+      prismaClient.order_to_menu_position.create({
+        data: {
+          count: menuPositionsCounts[index],
+          menuPositionId: item,
+          orderId,
+        },
+      }),
+    );
+    return await Promise.all(promises);
   }
 }

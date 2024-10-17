@@ -1,19 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { OrderStatus } from './order-status.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
 export class OrderStatusService {
-  constructor(
-    @InjectRepository(OrderStatus)
-    private orderStatusRepository: Repository<OrderStatus>,
-  ) {}
-  async getById(id: number, repository = this.orderStatusRepository) {
-    return await repository.findOne({ where: { id } });
+  constructor(private readonly prismaService: PrismaService) {}
+  async getById(id: number) {
+    return await this.prismaService.order_status.findUnique({ where: { id } });
   }
-  async getByName(name?: string, repository = this.orderStatusRepository) {
+  async getByName(name?: string) {
     if (!name) return null;
-    return await repository.findOne({ where: { name } });
+    return await this.prismaService.order_status.findFirst({ where: { name } });
   }
 }

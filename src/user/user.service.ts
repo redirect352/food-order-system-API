@@ -1,136 +1,148 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './user.entity';
-import { DataSource, FindOptionsWhere, ObjectId, Repository } from 'typeorm';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { CryptoService } from 'lib/helpers/crypto/crypto.service';
 import { SignUpDto } from 'src/auth/dto/sign-up.dto';
-import { Employee } from 'src/employee/employee.entity';
-import { BranchOffice } from 'src/branch-office/branch-office.entity';
+import { PrismaService } from '../database/prisma.service';
+import { Prisma, PrismaClient, user } from '@prisma/client';
+import { EmployeeService } from '../employee/employee.service';
+import { BranchOfficeService } from '../branch-office/branch-office.service';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
     private readonly cryptoService: CryptoService,
-    private dataSource: DataSource,
+    private readonly prismaService: PrismaService,
+    private readonly employeeService: EmployeeService,
+    private readonly branchOfficeService: BranchOfficeService,
   ) {}
   private readonly logger = new Logger(UserService.name);
 
-  async findUser(where: FindOptionsWhere<User> | FindOptionsWhere<User>[]) {
-    return await this.usersRepository.findOne({
+  async getUserFullInfo(
+    where: Prisma.userWhereUniqueInput,
+    prismaClient: PrismaClient = this.prismaService,
+  ) {
+    const user = await prismaClient.user.findUnique({
       where,
-      relations: { employeeBasicData: { office: true } },
+      select: { id: true, email: true, employeeId: true },
     });
+    if (!user) throw new NotFoundException('Пользователь не найден');
+    const employee = await this.employeeService.findEmployeeById(
+      user.employeeId,
+    );
+    const office = await this.branchOfficeService.getBranchOfficeById(
+      employee.officeId,
+    );
+    return {
+      user,
+      employee,
+      office,
+    };
   }
-
+  async getUserAuthData(where: { login?: string; email?: string }) {
+    const user = await this.prismaService.user.findFirst({ where });
+    if (user) {
+      const employee = await this.employeeService.findEmployeeById(
+        user.employeeId,
+      );
+      return { user, active: employee.active };
+    }
+    return null;
+  }
   async findByLogin(login: string) {
-    return await this.usersRepository.findOneBy({ login });
+    return await this.prismaService.user.findUnique({ where: { login } });
   }
   async findById(id: number) {
-    return await this.usersRepository.findOneBy({ id });
+    return await this.prismaService.user.findUnique({ where: { id } });
   }
-  async findUserServingCanteen(id: number): Promise<number> {
-    const res = await this.usersRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.employeeBasicData', 'employee')
-      .leftJoinAndSelect('employee.office', 'userOffice')
-      .select(['userOffice.servingCanteenId'])
-      .where('user.id=:userId', { userId: id })
-      .execute();
-    const canteenId = res[0]?.servingCanteenId;
-    if (!canteenId) throw new NotFoundException();
-    return canteenId as number;
+  async findUserServingCanteen(
+    id: number,
+    prismaClient: PrismaClient = this.prismaService,
+  ): Promise<number> {
+    const userData = await this.getUserFullInfo({ id }, prismaClient);
+    if (!userData) throw new NotFoundException();
+    return userData.office.servingCanteenId;
   }
 
-  async updateUserById(id: number, updatedUser: QueryDeepPartialEntity<User>) {
-    return await this.usersRepository.update({ id: id }, updatedUser);
-  }
-  async updateUser(
-    criteria:
-      | string
-      | number
-      | FindOptionsWhere<User>
-      | Date
-      | ObjectId
-      | string[]
-      | number[]
-      | Date[]
-      | ObjectId[],
-    updatedUser: QueryDeepPartialEntity<User>,
+  async updateUserById(
+    id: number,
+    updatedUser: Prisma.XOR<
+      Prisma.userUpdateInput,
+      Prisma.userUncheckedUpdateInput
+    >,
   ) {
-    return await this.usersRepository.update(criteria, updatedUser);
+    return await this.prismaService.user.update({
+      where: { id },
+      data: updatedUser,
+    });
   }
-  async updateUserPassword(
-    criteria:
-      | string
-      | number
-      | FindOptionsWhere<User>
-      | Date
-      | ObjectId
-      | string[]
-      | number[]
-      | Date[]
-      | ObjectId[],
-    newPassword: string,
+  async updateUserByEmail(
+    email,
+    updatedUser: Prisma.XOR<
+      Prisma.userUpdateInput,
+      Prisma.userUncheckedUpdateInput
+    >,
   ) {
-    return await this.usersRepository.update(criteria, {
-      password: await this.cryptoService.hashPassword(newPassword),
+    return await this.prismaService.user.update({
+      where: { email },
+      data: updatedUser,
+    });
+  }
+  async updateUserPassword(id: number, newPassword: string) {
+    return await this.prismaService.user.update({
+      where: { id },
+      data: {
+        password: await this.cryptoService.hashPassword(newPassword),
+      },
     });
   }
 
   async register(signUpDto: SignUpDto) {
     const { surname, email, login, password, personnelNumber, officeId } =
       signUpDto;
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.startTransaction();
-    try {
-      const employee = await queryRunner.manager
-        .getRepository(Employee)
-        .findOne({
-          where: {
-            surname,
-            personnelNumber,
-            office: { ...new BranchOffice(), id: officeId },
-            user: null,
-            active: true,
-          },
-        });
-      if (!employee) {
-        throw new ForbiddenException(
-          'Невозможно создать аккаунт. Указанный сотрудник не существует либо уже зарегистрирован',
-        );
-      }
-      const customer = new User();
-      customer.email = email;
-      customer.login = login;
-      customer.role = 'client';
-      customer.password = password;
-      customer.isPasswordTemporary = true;
-      customer.employeeBasicData = employee;
-      const user = await queryRunner.manager.getRepository(User).save(customer);
-      await queryRunner.commitTransaction();
-      return user;
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      if (err?.status) throw err;
-      if (err?.errno === 1062) {
-        throw new ForbiddenException(
-          'Невозможно создать аккаунт. Указанный логин или email уже занят',
-        );
-      }
-      console.log(err);
-      this.logger.error(err);
-      throw new BadRequestException(err.message);
-    } finally {
-      await queryRunner.release();
+    const employee = await this.employeeService.findEmployee({
+      surname,
+      personnelNumber,
+      officeId,
+    });
+    if (!employee) {
+      throw new ForbiddenException(
+        'Невозможно создать аккаунт. Указанный сотрудник не существует',
+      );
     }
+    if (!employee.active) {
+      throw new ForbiddenException(
+        'Невозможно создать аккаунт. Сотрудник с указанными данными уволен',
+      );
+    }
+    const user = await this.prismaService.user.findFirst({
+      where: { employeeId: employee.id },
+    });
+    if (user) {
+      throw new ForbiddenException(
+        'Невозможно создать аккаунт. Сотрудник с указанными данными уже зарегистрирован',
+      );
+    }
+    const result = await this.prismaService.$transaction(
+      [
+        this.prismaService.user.create({
+          data: {
+            email,
+            login,
+            password,
+            isPasswordTemporary: true,
+            role: 'client',
+            employeeId: employee.id,
+          },
+        }),
+      ],
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      },
+    );
+    return result[0] as user;
   }
 }

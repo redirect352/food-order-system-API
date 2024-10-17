@@ -22,10 +22,8 @@ export class IsMenuPositionsExistsConstraint
     if (!idList || idList.length === 0) {
       return false;
     }
-    const menuPositions = await this.menuPositionService.getMenuPositions(
-      idList,
-      ['id'],
-    );
+    const menuPositions =
+      await this.menuPositionService.getMenuPositions(idList);
     if (!menuPositions || menuPositions.length !== idList.length) {
       this.notExistIdList = idList.filter(
         (item) =>

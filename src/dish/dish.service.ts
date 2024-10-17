@@ -1,19 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateDishDto } from './dto/create-dish.dto';
-import { Dish } from './dish.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { DishCategoryService } from 'src/dish-category/dish-category.service';
+import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class DishService {
   constructor(
-    @InjectRepository(Dish)
-    private dishRepository: Repository<Dish>,
     private dishCategoryService: DishCategoryService,
+    private readonly prismaService: PrismaService,
   ) {}
   async createDish(createDishDto: CreateDishDto) {
-    const { dishCategoryId, dishCategoryName } = createDishDto;
+    const { dishCategoryId, dishCategoryName, ...data } = createDishDto;
     const categoryId =
       dishCategoryId ??
       (await this.dishCategoryService.getByName(dishCategoryName))?.id ??
@@ -23,38 +20,21 @@ export class DishService {
         `Категории "${dishCategoryName}" не существует`,
       );
     }
-    // return [{ id: 3 }];
-    const res = await this.dishRepository
-      .createQueryBuilder()
-      .insert()
-      .into(Dish)
-      .values({
-        ...createDishDto,
-        providingCanteen: {
-          id: createDishDto.providingCanteenId,
-        },
-        image: {
-          id: createDishDto.imageId,
-        },
-        category:
-          categoryId !== -1
-            ? {
-                id: categoryId,
-              }
-            : undefined,
-      })
-      .execute()
-      .catch((err) => {
-        if ((err.errno = 1452))
-          throw new BadRequestException(
-            'Ошибка добавления, изображения или филиала не существует в базе данных.',
-          );
-        throw new BadRequestException('Bad request');
-      });
-    return res.identifiers;
+    delete createDishDto.dishCategoryName;
+    createDishDto.dishCategoryId = categoryId;
+
+    const dish = await this.prismaService.dish.create({
+      data: { ...data, categoryId },
+    });
+    if (!dish) {
+      throw new BadRequestException(
+        'Ошибка добавления блюда. Некорректные данные.',
+      );
+    }
+    return dish.id;
   }
 
   async getDishById(id: number) {
-    return await this.dishRepository.findOne({ where: { id } });
+    return await this.prismaService.dish.findUnique({ where: { id } });
   }
 }

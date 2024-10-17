@@ -35,10 +35,9 @@ export class ValidateEmailStrategy extends PassportStrategy(
             ACCEPT_LINK: href,
           }),
         });
-        await userService.updateUser(
-          { email: destination },
-          { verificationEmailSendTime: new Date() },
-        );
+        await userService.updateUserByEmail(destination, {
+          verificationEmailSendTime: new Date(),
+        });
         // this.logger.debug(`sending email to ${destination} with Link ${href}`);
       },
       verify: async (payload, callback) =>

@@ -9,7 +9,7 @@ import { GetUserMenuDto } from './dto/get-user-menu.dto';
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
 
-  @Roles('admin', 'client')
+  @Roles('admin')
   @Post('/create')
   async createMenu(@Req() req, @Body() createMenuDto: CreateMenuDto) {
     return this.menuService.createMenu(createMenuDto, req.user?.userId);
