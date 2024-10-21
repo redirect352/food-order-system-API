@@ -30,7 +30,6 @@ export class OrderController {
   @Get('list')
   async getList(@Query() getActiveOrdersDto: GetOrdersListDto, @Req() req) {
     const { page, pageSize, active } = getActiveOrdersDto;
-    console.log(getActiveOrdersDto);
 
     return this.orderService.getOrdersList(
       page,

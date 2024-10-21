@@ -47,13 +47,11 @@ export class MenuPositionService {
       }
     }
     const where = {
-      menu_menu_positions_menu_position: {
+      menus: {
         some: {
-          menu: {
-            providingCanteenId: canteenId,
-            relevantFrom: { lt: new Date() },
-            expire: { gt: new Date() },
-          },
+          providingCanteenId: canteenId,
+          relevantFrom: { lt: new Date() },
+          expire: { gt: new Date() },
         },
       },
       dish: {
@@ -98,13 +96,11 @@ export class MenuPositionService {
         },
       },
       where: {
-        menu_menu_positions_menu_position: {
+        menus: {
           some: {
-            menu: {
-              providingCanteenId: canteenId,
-              relevantFrom: { lt: new Date() },
-              expire: { gt: new Date() },
-            },
+            providingCanteenId: canteenId,
+            relevantFrom: { lt: new Date() },
+            expire: { gt: new Date() },
           },
         },
       },
@@ -140,13 +136,11 @@ export class MenuPositionService {
       },
       where: {
         id: { in: menuPositionsIds },
-        menu_menu_positions_menu_position: {
+        menus: {
           some: {
-            menu: {
-              providingCanteenId: canteenId,
-              relevantFrom: { lt: new Date() },
-              expire: { gt: new Date() },
-            },
+            providingCanteenId: canteenId,
+            relevantFrom: { lt: new Date() },
+            expire: { gt: new Date() },
           },
         },
       },

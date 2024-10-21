@@ -15,6 +15,7 @@ export class MenuService {
   ) {}
 
   async createMenu(createMenuDto: CreateMenuDto, userId?: number) {
+    const { menuPositions } = createMenuDto;
     const result = await this.prismaService.menu.create({
       data: {
         name: createMenuDto.name ?? `Меню ${new Date().toISOString()}`,
@@ -22,9 +23,9 @@ export class MenuService {
         expire: createMenuDto.expire,
         authorId: userId,
         providingCanteenId: createMenuDto.providingCanteenId,
-        menu_menu_positions_menu_position: {
-          create: createMenuDto.menuPositions.map((id) => ({
-            menuPositionId: id,
+        menu_positions: {
+          connect: menuPositions.map((id) => ({
+            id,
           })),
         },
       },

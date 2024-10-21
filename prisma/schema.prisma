@@ -82,23 +82,23 @@ model menu {
   providingCanteenId                Int
   user                              user?         @relation(fields: [authorId], references: [id])
   authorId                          Int?
-  menu_menu_positions_menu_position menu_menu_positions_menu_position[]
+  menu_positions                    menu_position[]
 }
 
-model menu_menu_positions_menu_position {
-  menuId         Int
-  menuPositionId Int
-  menu_position  menu_position @relation(fields: [menuPositionId], references: [id])
-  menu           menu          @relation(fields: [menuId], references: [id], onDelete: Cascade)
+// model menu_menu_positions_menu_position {
+//   menuId         Int
+//   menuPositionId Int
+//   menu_position  menu_position @relation(fields: [menuPositionId], references: [id])
+//   menu           menu          @relation(fields: [menuId], references: [id], onDelete: Cascade)
 
-  @@id([menuId, menuPositionId])
-}
+//   @@id([menuId, menuPositionId])
+// }
 
 model menu_position {
   id                                Int                                 @id @default(autoincrement())
   price                             Int
   discount                          Int                                 @default(0)
-  menu_menu_positions_menu_position menu_menu_positions_menu_position[]
+  menus                             menu[]
   dish                              dish                                @relation(fields: [dishId], references: [id])
   dishId                            Int
   order_to_menu_position            order_to_menu_position[]
