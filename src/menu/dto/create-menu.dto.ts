@@ -34,4 +34,10 @@ export class CreateMenuDto {
   @Min(1)
   @isBranchOfficeExists({ checkOnCanteen: true })
   providingCanteenId: number;
+
+  @ArrayMinSize(0)
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  @isMenuPositionsExists()
+  servedOffices: number[];
 }

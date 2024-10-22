@@ -13,12 +13,13 @@ model branch_office {
   name                String          @db.VarChar(127)
   isCanteen           Boolean         @default(false) 
   address             String          @db.VarChar(127)
-  setvingCanteen      branch_office?  @relation("branch_officeToserving_canteen", fields: [servingCanteenId], references: [id])
+  servingCanteen      branch_office?  @relation("branch_officeToserving_canteen", fields: [servingCanteenId], references: [id])
   servingCanteenId    Int?
-  servedCanteens      branch_office[] @relation("branch_officeToserving_canteen")
+  servedOffices      branch_office[] @relation("branch_officeToserving_canteen")
   dishes              dish[]
   employees           employee[]
   providedMenus       menu[]
+  consumedMenus       menu[] @relation("MenuForConsumption")
 }
 
 model dish {
@@ -83,16 +84,8 @@ model menu {
   user                              user?         @relation(fields: [authorId], references: [id])
   authorId                          Int?
   menu_positions                    menu_position[]
+  served_offices                    branch_office[] @relation(name: "MenuForConsumption")
 }
-
-// model menu_menu_positions_menu_position {
-//   menuId         Int
-//   menuPositionId Int
-//   menu_position  menu_position @relation(fields: [menuPositionId], references: [id])
-//   menu           menu          @relation(fields: [menuId], references: [id], onDelete: Cascade)
-
-//   @@id([menuId, menuPositionId])
-// }
 
 model menu_position {
   id                                Int                                 @id @default(autoincrement())

@@ -36,7 +36,7 @@ export class MenuPositionService {
     });
   }
 
-  async getActual(canteenId: number, getUserMenuDto: GetUserMenuDto) {
+  async getActual(officeId: number, getUserMenuDto: GetUserMenuDto) {
     const { page, pageSize, dishCategoryId, productType } = getUserMenuDto;
     let productTypeFilter: object | undefined = undefined;
     if (productType && productType.length === 1) {
@@ -49,7 +49,7 @@ export class MenuPositionService {
     const where = {
       menus: {
         some: {
-          providingCanteenId: canteenId,
+          served_offices: { some: { id: officeId } },
           relevantFrom: { lt: new Date() },
           expire: { gt: new Date() },
         },
@@ -86,7 +86,7 @@ export class MenuPositionService {
     };
   }
 
-  async getActualCategories(canteenId: number) {
+  async getActualCategories(officeId: number) {
     const categories = await this.prismaService.menu_position.findMany({
       select: {
         dish: {
@@ -98,14 +98,14 @@ export class MenuPositionService {
       where: {
         menus: {
           some: {
-            providingCanteenId: canteenId,
+            served_offices: { some: { id: officeId } },
             relevantFrom: { lt: new Date() },
             expire: { gt: new Date() },
           },
         },
       },
     });
-    console.dir(categories, { depth: null });
+    // console.dir(categories, { depth: null });
     const ids = new Set(categories.map(({ dish }) => dish.dish_category.id));
     return categories
       .map(({ dish }) => ({

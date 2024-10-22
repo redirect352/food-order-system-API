@@ -66,6 +66,14 @@ export class UserService {
     if (!userData) throw new NotFoundException();
     return userData.office.servingCanteenId;
   }
+  async getUserOffice(
+    id: number,
+    prismaClient: PrismaClient = this.prismaService,
+  ) {
+    const userData = await this.getUserFullInfo({ id }, prismaClient);
+    if (!userData) throw new NotFoundException();
+    return userData.office;
+  }
 
   async updateUserById(
     id: number,

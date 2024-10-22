@@ -15,7 +15,7 @@ export class MenuService {
   ) {}
 
   async createMenu(createMenuDto: CreateMenuDto, userId?: number) {
-    const { menuPositions } = createMenuDto;
+    const { menuPositions, servedOffices } = createMenuDto;
     const result = await this.prismaService.menu.create({
       data: {
         name: createMenuDto.name ?? `Меню ${new Date().toISOString()}`,
@@ -28,6 +28,9 @@ export class MenuService {
             id,
           })),
         },
+        served_offices: {
+          connect: servedOffices.map((id) => ({ id })),
+        },
       },
     });
     return result;
@@ -35,9 +38,9 @@ export class MenuService {
 
   async getActualMenuForUser(getUserMenuDto: GetUserMenuDto, userId?: number) {
     if (!userId) throw new UnauthorizedException();
-    const canteenId = await this.userService.findUserServingCanteen(userId);
+    const office = await this.userService.getUserOffice(userId);
     const menuList = await this.menuPositionService.getActual(
-      canteenId,
+      office.id,
       getUserMenuDto,
     );
     if (!menuList.items)
@@ -55,7 +58,7 @@ export class MenuService {
 
   async getActualMenuCategories(userId?: number) {
     if (!userId) throw new UnauthorizedException();
-    const canteenId = await this.userService.findUserServingCanteen(userId);
-    return this.menuPositionService.getActualCategories(canteenId);
+    const userOffice = await this.userService.getUserOffice(userId);
+    return this.menuPositionService.getActualCategories(userOffice.id);
   }
 }
