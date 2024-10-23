@@ -1,52 +1,115 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { Menu } from './menu.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateMenuDto } from './dto/create-menu.dto';
-import { BranchOffice } from 'src/branch-office/branch-office.entity';
-import { MenuPosition } from 'src/menu-position/menu-position.entity';
-import { User } from 'src/user/user.entity';
 import { UserService } from 'src/user/user.service';
 import { GetUserMenuDto } from './dto/get-user-menu.dto';
 import { MenuPositionService } from 'src/menu-position/menu-position.service';
 import { MenuPositionItem } from './dto/menu-position-item.dto';
+import { PrismaService } from '../database/prisma.service';
+import { menuDeclaration } from '../lib/utils/menu-parser/menu-parser.interface';
+import { BranchOfficeService } from '../branch-office/branch-office.service';
 
 @Injectable()
 export class MenuService {
   constructor(
-    @InjectRepository(Menu)
-    private readonly menuRepository: Repository<Menu>,
-    // @InjectRepository(MenuPosition)
-    // private readonly menuPositionRepository: Repository<MenuPosition>,
     private readonly menuPositionService: MenuPositionService,
+    private readonly prismaService: PrismaService,
     private readonly userService: UserService,
+    private readonly branchOfficeService: BranchOfficeService,
   ) {}
 
   async createMenu(createMenuDto: CreateMenuDto, userId?: number) {
-    const menu = new Menu();
-    menu.expire = createMenuDto.expire;
-    menu.relevantFrom = createMenuDto.relevantFrom;
-    menu.providingCanteen = {
-      ...new BranchOffice(),
-      id: createMenuDto.providingCanteenId,
-    };
-    menu.menuPositions = createMenuDto.menuPositions.map((id) => ({
-      id,
-      ...new MenuPosition(),
-    }));
-    if (userId) {
-      menu.author = { ...new User(), id: userId };
+    const { menuPositions, servedOffices } = createMenuDto;
+    const result = await this.prismaService.menu.create({
+      data: {
+        name: createMenuDto.name ?? `Меню ${new Date().toISOString()}`,
+        relevantFrom: createMenuDto.relevantFrom,
+        expire: createMenuDto.expire,
+        authorId: userId,
+        providingCanteenId: createMenuDto.providingCanteenId,
+        menu_positions: {
+          connect: menuPositions.map((id) => ({
+            id,
+          })),
+        },
+        served_offices: {
+          connect: servedOffices.map((id) => ({ id })),
+        },
+      },
+    });
+    return result;
+  }
+
+  async createMenuWithPositions(
+    menuDeclaration: menuDeclaration,
+    extraInfo: {
+      authorId?: number;
+      providingCanteenId?: number;
+      servedOfficesIds?: number[];
+    },
+  ) {
+    const {
+      name,
+      relevantFrom,
+      expire,
+      providingCanteenName,
+      served_offices,
+      menuPositions,
+    } = menuDeclaration;
+    const { authorId } = extraInfo;
+    let { providingCanteenId, servedOfficesIds } = extraInfo;
+    if (!providingCanteenId) {
+      providingCanteenId = (
+        await this.branchOfficeService.getBranchOffice({
+          name: providingCanteenName,
+        })
+      ).id;
+      if (!providingCanteenId)
+        throw new BadRequestException(
+          'Некорректно указана столовая предоставляющая меню',
+        );
     }
-    menu.name = createMenuDto.name ?? `Меню ${new Date().toISOString()}`;
-    const res = await this.menuRepository.save(menu);
-    return res;
+    if (!servedOfficesIds || servedOfficesIds.length === 0) {
+      servedOfficesIds =
+        await this.branchOfficeService.getBranchOfficesIdsByNames(
+          served_offices,
+        );
+      if (!servedOfficesIds || servedOfficesIds.length === 0)
+        throw new BadRequestException(
+          'Не указаны филиалы, для которых меню доступно',
+        );
+    }
+    const menuPositionsList =
+      await this.menuPositionService.findOrCreateMenuPositions(
+        menuPositions,
+        providingCanteenId,
+      );
+
+    return await this.prismaService.menu.create({
+      data: {
+        name: name ?? `Меню ${new Date().toISOString()}`,
+        relevantFrom,
+        expire,
+        authorId,
+        providingCanteenId,
+        menu_positions: {
+          connect: menuPositionsList.map(({ id }) => ({ id })),
+        },
+        served_offices: {
+          connect: servedOfficesIds.map((id) => ({ id })),
+        },
+      },
+    });
   }
 
   async getActualMenuForUser(getUserMenuDto: GetUserMenuDto, userId?: number) {
     if (!userId) throw new UnauthorizedException();
-    const canteenId = await this.userService.findUserServingCanteen(userId);
+    const office = await this.userService.getUserOffice(userId);
     const menuList = await this.menuPositionService.getActual(
-      canteenId,
+      office.id,
       getUserMenuDto,
     );
     if (!menuList.items)
@@ -64,7 +127,7 @@ export class MenuService {
 
   async getActualMenuCategories(userId?: number) {
     if (!userId) throw new UnauthorizedException();
-    const canteenId = await this.userService.findUserServingCanteen(userId);
-    return this.menuPositionService.getActualCategories(canteenId);
+    const userOffice = await this.userService.getUserOffice(userId);
+    return this.menuPositionService.getActualCategories(userOffice.id);
   }
 }

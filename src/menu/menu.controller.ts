@@ -1,18 +1,66 @@
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  ParseFilePipeBuilder,
+  Post,
+  Query,
+  Req,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { GetUserMenuDto } from './dto/get-user-menu.dto';
+import { MenuParserService } from '../lib/utils/menu-parser/menu-parser.service';
+import { CreateMenuFromDocxDto } from './dto/create-menu-from-docx.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Roles('client')
 @Controller('menu')
 export class MenuController {
-  constructor(private readonly menuService: MenuService) {}
+  constructor(
+    private readonly menuService: MenuService,
+    private readonly menuParserService: MenuParserService,
+  ) {}
 
-  @Roles('admin', 'client')
+  @Roles('admin')
   @Post('/create')
   async createMenu(@Req() req, @Body() createMenuDto: CreateMenuDto) {
     return this.menuService.createMenu(createMenuDto, req.user?.userId);
+  }
+
+  @Roles('admin')
+  @Post('/create/from-file/word')
+  @UseInterceptors(FileInterceptor('file'))
+  async createMenuFromWordFile(
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addMaxSizeValidator({
+          maxSize: 1000 * 1000 * 2,
+        })
+        .build({
+          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+        }),
+    )
+    file: Express.Multer.File,
+    @Body() createMenuFromDocxDto: CreateMenuFromDocxDto,
+    @Req() req,
+  ) {
+    const menuDeclaration = await this.menuParserService.parseMenuFile(file);
+    const menu = await this.menuService.createMenuWithPositions(
+      menuDeclaration,
+      {
+        authorId: +req.user.userId,
+        providingCanteenId: createMenuFromDocxDto.providingCanteenId,
+        servedOfficesIds: createMenuFromDocxDto.servedOffices,
+      },
+    );
+
+    console.log(createMenuFromDocxDto);
+    return { menu };
   }
 
   @Get('/actual')

@@ -1,5 +1,5 @@
 import {
-  IsIn,
+  IsBoolean,
   IsInt,
   IsOptional,
   IsString,
@@ -17,8 +17,8 @@ export class CreateBranchOfficeDto {
   @MinLength(3)
   address: string;
 
-  @IsIn([0, 1])
-  isCanteen: number;
+  @IsBoolean()
+  isCanteen: boolean;
 
   @IsOptional()
   @IsInt()

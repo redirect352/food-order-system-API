@@ -1,54 +1,61 @@
 services:
-  server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - PORT=${API_PORT}
-    environment:
-      NODE_ENV: development
-    ports:
-      - ${API_PORT}:${API_PORT}
-    volumes:
-      - ./src:/usr/src/app/src
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - default
+  # server:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     args:
+  #       - PORT=${API_PORT}
+  #   environment:
+  #     NODE_ENV: development
+  #   ports:
+  #     - ${API_PORT}:${API_PORT}
+  #   volumes:
+  #     - ./src:/usr/src/app/src
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   networks:
+  #     - default
   db:
-    image: mysql
+    image: postgres
     restart: always
     ports:
       - '${DB_PORT}:${DB_PORT}'
     volumes:
-      - db_data:/var/lib/mysql:rw
+      - db_data:/var/lib/postgresql/data
     environment:
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
-      - MYSQL_PASSWORD=${DB_PASSWORD}
-      - MYSQL_DATABASE=${DB_NAME}
-      - MYSQL_USER=${DB_USERNAME}
-      - MYSQL_TCP_PORT=${DB_PORT}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: "/var/lib/postgresql/data/pgdata"
     healthcheck:
-      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
-      start_period: 5s
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U habrpguser -d habrdb"]
+      interval: 10s
       timeout: 5s
-      retries: 55
+      retries: 5
+      start_period: 10s
     networks:
       - default
-  phpmyadmin:
-    image: phpmyadmin
-    restart: always
-    ports:
-      - 8080:80
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4:7.2
     environment:
-      - PMA_HOST=db
-      - PMA_PORT=${DB_PORT}
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      PGADMIN_DEFAULT_EMAIL: "test@gmail.com"
+      PGADMIN_DEFAULT_PASSWORD: "testpswd"
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
     networks:
       - default
 networks:
@@ -56,3 +63,4 @@ networks:
     driver: bridge
 volumes:
   db_data:
+  pgadmin-data:

@@ -7,7 +7,8 @@ import { InsertResult } from 'typeorm';
 describe('BranchOfficeController', () => {
   let branchOfficeController: BranchOfficeController;
   const mockBranchOfficeService = {
-    createBranchOffice: jest.fn(async (dto: CreateBranchOfficeDto) => ({
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    createBranchOffice: jest.fn(async (_dto: CreateBranchOfficeDto) => ({
       ...new InsertResult(),
       identifiers: [Date.now()],
     })),
@@ -35,7 +36,7 @@ describe('BranchOfficeController', () => {
     it('it should create office', async () => {
       const createBranchOfficeDto = {
         name: 'офис',
-        isCanteen: 0,
+        isCanteen: false,
         servingCanteenId: 1,
         address: 'address',
       };

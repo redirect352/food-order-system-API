@@ -1,4 +1,5 @@
-import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class GetOrdersListDto {
   @IsInt()
@@ -11,6 +12,9 @@ export class GetOrdersListDto {
   pageSize?: number = 3;
 
   @IsOptional()
-  @IsIn([0, 1])
-  active?: number;
+  @Transform(({ obj, key }) => {
+    return obj[key] === 'true' ? true : obj[key] === 'false' ? false : obj[key];
+  })
+  @IsBoolean()
+  active?: boolean;
 }

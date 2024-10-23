@@ -14,7 +14,7 @@ export class DishController {
     @Res({ passthrough: true }) res,
   ) {
     const result = await this.dishService.createDish(createDishDto);
-    if (result.length === 0) {
+    if (!result) {
       res.status(304);
       return { message: 'Блюдо не добавлено в каталог' };
     } else {

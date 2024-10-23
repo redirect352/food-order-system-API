@@ -1,4 +1,3 @@
-import { Order } from '../order.entity';
 export type OrderPositionMainInfo = {
   count: number;
   price: number;
@@ -15,19 +14,19 @@ export class OrderMainInfoDto {
   public created: Date;
   public orderPositions: Array<OrderPositionMainInfo>;
 
-  public constructor(order: Order) {
+  public constructor(order: any) {
     this.number = order.number;
     this.issued = order.issued;
     this.fullPrice = order.fullPrice;
-    this.status = order.status.name;
+    this.status = order.order_status.name;
     this.updated = order.updated;
     this.created = order.created;
-    this.canCancel = order.status.canCancel;
-    this.orderPositions = order.orderToMenuPosition.map((pos) => ({
+    this.canCancel = order.order_status.canCancel;
+    this.orderPositions = order.order_to_menu_position.map((pos) => ({
       count: pos.count,
-      price: pos.menuPosition.price,
-      discount: pos.menuPosition.discount,
-      name: pos.menuPosition.dish.name,
+      price: pos.menu_position.price,
+      discount: pos.menu_position.discount,
+      name: pos.menu_position.dish?.name,
     }));
   }
 }

@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   ArrayMinSize,
   IsDate,
@@ -34,4 +35,14 @@ export class CreateMenuDto {
   @Min(1)
   @isBranchOfficeExists({ checkOnCanteen: true })
   providingCanteenId: number;
+
+  @Transform(({ value }) => {
+    console.log(JSON.parse(value));
+    console.log(123);
+    return JSON.parse(value);
+  })
+  @ArrayMinSize(0)
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  servedOffices: number[];
 }

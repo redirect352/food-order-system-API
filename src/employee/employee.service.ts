@@ -1,58 +1,53 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   Logger,
+  NotAcceptableException,
 } from '@nestjs/common';
 import { CheckEmployeeDto } from 'src/auth/dto/check-employee.dto';
-import { Employee } from './employee.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
 import { UpdateEmployeesInOfficeDto } from './dto/update-employees-in-office.dto';
-import { User } from 'src/user/user.entity';
-import { BranchOffice } from 'src/branch-office/branch-office.entity';
+import { PrismaService } from '../database/prisma.service';
+import { setOfficeEmployeesInactive } from '@prisma/client/sql';
 
 @Injectable()
 export class EmployeeService {
-  constructor(
-    @InjectRepository(Employee)
-    private employeeRepository: Repository<Employee>,
-    private dataSource: DataSource,
-  ) {}
-
+  constructor(private prismaService: PrismaService) {}
   private readonly logger = new Logger(EmployeeService.name);
 
   async checkEmployeeCanRegister(checkEmployeeDto: CheckEmployeeDto) {
     const { officeId, surname, personnelNumber } = checkEmployeeDto;
-    const employee = await this.employeeRepository
-      .createQueryBuilder('employee')
-      .leftJoinAndSelect('employee.user', 'user')
-      .where('employee.officeId=:officeId', { officeId })
-      .andWhere('employee.active=true')
-      .andWhere('employee.surname like :surname', { surname })
-      .andWhere('employee.personnelNumber=:personnelNumber', {
+    const employeePrisma = await this.prismaService.employee.findFirst({
+      where: {
+        surname: {
+          equals: surname,
+          mode: 'insensitive',
+        },
         personnelNumber,
-      })
-      .getOne();
-    if (!employee) {
+        officeId,
+        active: true,
+      },
+      select: {
+        user: true,
+      },
+    });
+    if (!employeePrisma) {
       throw new ForbiddenException(
         'Сотрудника с указанной фамилией и табельным номером не существует',
       );
     }
-    if (employee.user !== null) {
+    if (employeePrisma.user !== null) {
       throw new ForbiddenException(
         'Сотрудник с указанной фамилией и табельным уже зарегистрирован в системе. Для восстановления доступа к аккаунту воспользуйтесь функцией восстановления пароля',
       );
     }
     return { message: 'Ok' };
   }
+
   async updateEmployeesInOffice(
     file: Express.Multer.File,
     updateEmployeesInOfficeDto: UpdateEmployeesInOfficeDto,
   ) {
     const { officeId } = updateEmployeesInOfficeDto;
-    const office = new BranchOffice();
-    office.id = officeId;
     const content = file.buffer
       .toString()
       .split('\r\n')
@@ -66,51 +61,47 @@ export class EmployeeService {
         surname: item[0][0],
         name: item[0][1],
         patronymic: item[0][2],
-        office,
+        officeId,
         active: true,
         personnelNumber: item[1].toString(),
       }));
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.startTransaction();
     try {
-      const employeeRepository = queryRunner.manager.getRepository(Employee);
-      const userQb = await queryRunner.manager
-        .getRepository(User)
-        .createQueryBuilder('user');
-      await employeeRepository
-        .createQueryBuilder('employee')
-        .update()
-        .set({ active: false })
-        .where('employee.officeId = :officeId')
-        .andWhere(
-          'employee.id not IN (Select * from (' +
-            userQb
-              .select()
-              .innerJoin('user.employeeBasicData', 'employee')
-              .select(['employee.id as id'])
-              .where('employee.officeId = :officeId')
-              .andWhere('user.role != "client"')
-              .getQuery() +
-            ') as e1)',
-        )
-        .setParameter('officeId', officeId)
-        .execute();
-      return await employeeRepository
-        .createQueryBuilder('employee')
-        .insert()
-        .values(content)
-        .orUpdate(
-          ['active', 'name', 'patronymic'],
-          ['officeId', 'surname', 'personnelNumber'],
-        )
-        .execute();
+      await this.prismaService.$transaction(async (tx) => {
+        await tx.$queryRawTyped(setOfficeEmployeesInactive(officeId));
+        tx.employee.createMany({
+          data: content,
+          skipDuplicates: true,
+        });
+        await tx.employee.updateMany({
+          data: { active: true },
+          where: {
+            AND: [
+              { officeId },
+              {
+                personnelNumber: {
+                  in: content.map((item) => item.personnelNumber),
+                },
+              },
+            ],
+          },
+        });
+      });
     } catch (err) {
-      this.logger.error(err);
-      await queryRunner.rollbackTransaction();
-      throw new BadRequestException(err.message);
-    } finally {
-      await queryRunner.release();
+      this.logger.log(err);
+      throw new NotAcceptableException('Cannot update user list.');
     }
+  }
+  async findEmployeeById(id: number) {
+    return this.prismaService.employee.findUnique({ where: { id } });
+  }
+
+  async findEmployee(where: {
+    officeId: number;
+    surname: string;
+    personnelNumber: string;
+  }) {
+    return this.prismaService.employee.findFirst({
+      where,
+    });
   }
 }

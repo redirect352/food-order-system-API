@@ -1,16 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { Image } from './image.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { UserService } from 'src/user/user.service';
+import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class ImageService {
   constructor(
-    @InjectRepository(Image)
-    private readonly imagesRepository: Repository<Image>,
+    private readonly prismaService: PrismaService,
     private readonly userService: UserService,
   ) {}
 
@@ -28,23 +25,24 @@ export class ImageService {
       join(__dirname, '..', '..', '..', 'static', 'images', fileName),
       file.buffer,
     );
-    const image = new Image();
-    image.name =
-      name ?? file.originalname.slice(0, originalName.lastIndexOf('.'));
-    image.path = fileName;
-    image.uploadedBy = await this.userService.findByLogin('admin');
-    await this.imagesRepository.save(image);
+    await this.prismaService.image.create({
+      data: {
+        name: name ?? file.originalname.slice(0, originalName.lastIndexOf('.')),
+        path: fileName,
+        authorId: (await this.userService.findByLogin('admin'))?.id,
+      },
+    });
     return { fileName };
   }
 
   async getList(page: number, pageSize: number) {
-    return await this.imagesRepository.find({
-      order: { uploaded: 'DESC' },
+    return await this.prismaService.image.findMany({
+      orderBy: { uploaded: 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
     });
   }
   async getImageById(id: number) {
-    return await this.imagesRepository.findOne({ where: { id } });
+    return await this.prismaService.image.findUnique({ where: { id } });
   }
 }

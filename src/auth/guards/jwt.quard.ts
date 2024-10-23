@@ -5,9 +5,9 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
-import { UserRole } from 'src/user/user.entity';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { user_role } from '@prisma/client';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -15,7 +15,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     super();
   }
   canActivate(context: ExecutionContext) {
-    const roles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
+    const roles = this.reflector.getAllAndOverride<user_role[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -31,7 +31,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleRequest(err, user, info, context: ExecutionContext) {
-    const roles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
+    const roles = this.reflector.getAllAndOverride<user_role[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);

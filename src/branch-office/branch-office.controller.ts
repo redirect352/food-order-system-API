@@ -14,6 +14,7 @@ import { UpdateBranchOfficeDto } from './dto/update-branch-office.dto';
 import { GetBranchOfficeDto } from './dto/get-office.dto';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { BranchOfficeMainInfoDto } from './dto/branch-office-main-info.dto';
 
 @Roles('admin')
 @Controller('branch-office')
@@ -24,8 +25,8 @@ export class BranchOfficeController {
     const res = await this.branchOfficeService.createBranchOffice(
       createBranchOfficeDto,
     );
-    if (res.identifiers.length > 0) {
-      return res.identifiers[0];
+    if (res) {
+      return res.id;
     } else {
       throw new BadRequestException(
         'Невозможно создать филиал с указанными данными',
@@ -37,7 +38,8 @@ export class BranchOfficeController {
   async updateOffice(@Body() updateOfficeDto: UpdateBranchOfficeDto) {
     const res =
       await this.branchOfficeService.updateBranchOffice(updateOfficeDto);
-    if (res.affected > 0) {
+    if (res) {
+      console.log(res);
       return { message: 'updated' };
     } else {
       throw new BadRequestException('Ошибка обновления данных филиала');
@@ -47,7 +49,8 @@ export class BranchOfficeController {
   @Public()
   @Get('/registration-list')
   async getRegistrationList() {
-    return await this.branchOfficeService.getRegistrationList();
+    const offices = await this.branchOfficeService.getRegistrationList();
+    return offices.map((office) => new BranchOfficeMainInfoDto(office));
   }
 
   @Get('/get-by-name/:name')
@@ -58,6 +61,6 @@ export class BranchOfficeController {
       throw new NotFoundException(
         `Филиал с названием ${getBranchOfficeDto.name} не найден`,
       );
-    return office;
+    return new BranchOfficeMainInfoDto(office);
   }
 }

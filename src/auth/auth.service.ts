@@ -6,12 +6,12 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
-import { CryptoService } from '../../lib/helpers/crypto/crypto.service';
+import { CryptoService } from '../lib/helpers/crypto/crypto.service';
 import { UpdateCredentialsDto } from './dto/update-credentials.dto';
 import { SignUpDto } from './dto/sign-up.dto';
-import { User } from 'src/user/user.entity';
 import { ValidateEmailStrategy } from './strategies/validate-email.strategy';
 import e from 'express';
+import { user } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -28,13 +28,13 @@ export class AuthService {
     password: string,
   ) {
     if (!login && !email) return null;
-    const user = await await this.userService.findUser({
+    const { user, active } = await this.userService.getUserAuthData({
       login,
       email,
-      employeeBasicData: { active: true },
     });
     if (
       user &&
+      active &&
       (await this.cryptoService.comparePassword(password, user.password))
     ) {
       if (user.isPasswordTemporary) {
@@ -78,7 +78,7 @@ export class AuthService {
     });
   }
   async sendVerificationEmailToUser(
-    user: User,
+    user: user,
     req: e.Request,
     res: e.Response,
   ) {
@@ -88,9 +88,6 @@ export class AuthService {
         new Date().getTime() - user.verificationEmailSendTime.getTime() <=
           1000 * 60 * 5
       ) {
-        // res.status(400);
-        // res.send({ message: '2121' });
-        // return;
         throw new BadRequestException(
           'Повторная отправка письма активации возможна только через 5 минут после прошлой попытки',
         );

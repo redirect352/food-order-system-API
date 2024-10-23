@@ -1,61 +1,59 @@
 import { Injectable } from '@nestjs/common';
-import { BranchOffice } from './branch-office.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { GetBranchOfficeDto } from './dto/get-office.dto';
+import { PrismaService } from '../database/prisma.service';
 import { CreateBranchOfficeDto } from './dto/create-branch-office.dto';
 import { UpdateBranchOfficeDto } from './dto/update-branch-office.dto';
-import { GetBranchOfficeDto } from './dto/get-office.dto';
 
 @Injectable()
 export class BranchOfficeService {
-  constructor(
-    @InjectRepository(BranchOffice)
-    private branchOfficeRepository: Repository<BranchOffice>,
-  ) {}
+  constructor(private prismaService: PrismaService) {}
   async getBranchOfficeById(id: number) {
-    return this.branchOfficeRepository.findOne({
+    return this.prismaService.branch_office.findUnique({
       where: { id },
-      select: ['id', 'isCanteen', 'name', 'servingCanteen', 'address'],
     });
   }
   async createBranchOffice(createBranchOfficeDto: CreateBranchOfficeDto) {
-    const { name, servingCanteenId, isCanteen, address } =
-      createBranchOfficeDto;
-    return await this.branchOfficeRepository.insert({
-      address,
-      name,
-      servingCanteen: { ...new BranchOffice(), id: servingCanteenId },
-      isCanteen: Boolean(isCanteen),
+    return this.prismaService.branch_office.create({
+      data: {
+        ...createBranchOfficeDto,
+      },
     });
   }
 
   async updateBranchOffice(updateBranchOfficeDto: UpdateBranchOfficeDto) {
     const { officeId, name, servingCanteenId, isCanteen, address } =
       updateBranchOfficeDto;
-    return await this.branchOfficeRepository.update(
-      { id: officeId },
-      {
-        id: officeId,
+    return this.prismaService.branch_office.update({
+      where: { id: officeId },
+      data: {
         name,
-        isCanteen: isCanteen !== undefined ? Boolean(isCanteen) : undefined,
         address,
-        servingCanteen:
-          servingCanteenId !== undefined
-            ? { id: servingCanteenId, ...new BranchOffice() }
-            : undefined,
+        servingCanteenId,
+        isCanteen: isCanteen !== undefined ? Boolean(isCanteen) : undefined,
       },
-    );
+    });
   }
   async getRegistrationList() {
-    return await this.branchOfficeRepository.find({
+    return this.prismaService.branch_office.findMany({
       where: { isCanteen: false },
     });
   }
 
   async getBranchOffice(getBranchOfficeDto: GetBranchOfficeDto) {
     const { name } = getBranchOfficeDto;
-    return await this.branchOfficeRepository.findOne({
+    return this.prismaService.branch_office.findFirst({
       where: { name },
     });
+  }
+
+  async getBranchOfficesIdsByNames(names: string[]) {
+    const offices = await this.prismaService.branch_office.findMany({
+      where: {
+        name: {
+          in: names,
+        },
+      },
+    });
+    return offices.map(({ id }) => id);
   }
 }

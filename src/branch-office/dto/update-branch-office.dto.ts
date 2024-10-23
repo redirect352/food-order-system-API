@@ -1,5 +1,5 @@
 import {
-  IsIn,
+  IsBoolean,
   IsInt,
   IsOptional,
   IsString,
@@ -25,8 +25,8 @@ export class UpdateBranchOfficeDto {
   address?: string;
 
   @IsOptional()
-  @IsIn([0, 1])
-  isCanteen?: number;
+  @IsBoolean()
+  isCanteen?: boolean;
 
   @IsOptional()
   @IsInt()

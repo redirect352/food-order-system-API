@@ -4,7 +4,7 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import Strategy from 'passport-magic-login';
-import { EmailBuilderService } from 'lib/helpers/email-builder/email-builder.service';
+import { EmailBuilderService } from 'src/lib/helpers/email-builder/email-builder.service';
 import { UserService } from 'src/user/user.service';
 
 @Injectable()
@@ -36,11 +36,10 @@ export class PasswordResetStrategy extends PassportStrategy(
             RESET_LINK: href,
           }),
         });
-        await userService.updateUser(
-          { email: destination },
-          { lastPasswordResetTime: new Date() },
-        );
-        this.logger.debug(`sending email to ${destination} with Link ${href}`);
+        await userService.updateUserByEmail(destination, {
+          lastPasswordResetTime: new Date(),
+        });
+        // this.logger.debug(`sending email to ${destination} with Link ${href}`);
       },
       verify: async (payload, callback) =>
         callback(null, this.validate(payload)),

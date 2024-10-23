@@ -1,18 +1,21 @@
 import { Module } from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { MenuController } from './menu.controller';
-import { Menu } from './menu.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from 'src/user/user.module';
-import { MenuPosition } from 'src/menu-position/menu-position.entity';
 import { MenuPositionModule } from 'src/menu-position/menu-position.module';
+import { DatabaseModule } from '../database/database.module';
+import { MenuParserModule } from '../lib/utils/menu-parser/menu-parser.module';
+import { NestjsFormDataModule } from 'nestjs-form-data';
+import { BranchOfficeModule } from '../branch-office/branch-office.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Menu]),
-    TypeOrmModule.forFeature([MenuPosition]),
+    DatabaseModule,
     UserModule,
     MenuPositionModule,
+    MenuParserModule,
+    NestjsFormDataModule,
+    BranchOfficeModule,
   ],
   controllers: [MenuController],
   providers: [MenuService],

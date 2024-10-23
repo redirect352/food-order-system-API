@@ -1,5 +1,4 @@
 import { MenuPositionItem } from 'src/menu/dto/menu-position-item.dto';
-import { Order } from '../order.entity';
 export type OrderPositionFullInfo = {
   count: number;
   menuPosition: MenuPositionItem;
@@ -14,17 +13,17 @@ export class OrderFullInfoDto {
   public canCancel: boolean;
   public orderPositions: Array<OrderPositionFullInfo>;
 
-  public constructor(order: Order) {
+  public constructor(order: any) {
     this.number = order.number;
     this.issued = order.issued;
     this.fullPrice = order.fullPrice;
-    this.status = order.status.name;
+    this.status = order.order_status.name;
     this.updated = order.updated;
     this.created = order.created;
-    this.canCancel = order.status.canCancel;
-    this.orderPositions = order.orderToMenuPosition.map((pos) => ({
+    this.canCancel = order.order_status.canCancel;
+    this.orderPositions = order.order_to_menu_position.map((pos) => ({
       count: pos.count,
-      menuPosition: new MenuPositionItem(pos.menuPosition),
+      menuPosition: new MenuPositionItem(pos.menu_position),
     }));
   }
 }
