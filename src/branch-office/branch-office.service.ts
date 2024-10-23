@@ -45,4 +45,15 @@ export class BranchOfficeService {
       where: { name },
     });
   }
+
+  async getBranchOfficesIdsByNames(names: string[]) {
+    const offices = await this.prismaService.branch_office.findMany({
+      where: {
+        name: {
+          in: names,
+        },
+      },
+    });
+    return offices.map(({ id }) => id);
+  }
 }

@@ -1,5 +1,5 @@
 import { ArrayMinSize, IsInt, Min, Validate } from 'class-validator';
-import { IsArrayWithSameLength } from 'lib/validators/array-same-length.validator';
+import { IsArrayWithSameLength } from 'src/lib/validators/array-same-length.validator';
 import { isMenuPositionsExists } from 'src/menu-position/validators/menu-positions-exists';
 
 export class CreateOrderDto {

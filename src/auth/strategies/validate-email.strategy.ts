@@ -4,7 +4,7 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import Strategy from 'passport-magic-login';
-import { EmailBuilderService } from 'lib/helpers/email-builder/email-builder.service';
+import { EmailBuilderService } from 'src/lib/helpers/email-builder/email-builder.service';
 import { UserService } from 'src/user/user.service';
 
 @Injectable()

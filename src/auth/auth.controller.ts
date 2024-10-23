@@ -16,7 +16,7 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { PasswordResetStrategy } from './strategies/password-reset.strategy';
 import { UserService } from 'src/user/user.service';
-import { TimeCheckerService } from 'lib/helpers/time-checker/time-checker.service';
+import { TimeCheckerService } from 'src/lib/helpers/time-checker/time-checker.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateCredentialsDto } from './dto/update-credentials.dto';

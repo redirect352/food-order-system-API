@@ -27,7 +27,7 @@ model dish {
   name               String          @db.VarChar(127)
   description        String          @db.VarChar(255)
   quantity           String          @db.VarChar(63)
-  calorieContent     String          @db.VarChar(63)
+  calorieContent     String?          @db.VarChar(63)
   proteins           Int?
   fats               Int?
   carbohydrates      Int?

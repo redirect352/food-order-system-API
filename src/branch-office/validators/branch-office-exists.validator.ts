@@ -26,6 +26,8 @@ export class IsBranchOfficeExistsConstraint
     { constraints }: ValidationArguments,
   ): Promise<boolean> {
     const checkOnCanteen = constraints[0];
+    if (!branchOfficeId)
+      throw new UnprocessableEntityException('Филиал не указан');
     const branchOffice =
       await this.branchOfficeService.getBranchOfficeById(branchOfficeId);
     if (!branchOffice) {

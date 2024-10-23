@@ -4,7 +4,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { CryptoService } from 'lib/helpers/crypto/crypto.service';
+import { CryptoService } from 'src/lib/helpers/crypto/crypto.service';
 import { SignUpDto } from 'src/auth/dto/sign-up.dto';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma, PrismaClient, user } from '@prisma/client';

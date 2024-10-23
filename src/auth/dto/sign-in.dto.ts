@@ -5,7 +5,7 @@ import {
   Validate,
   IsOptional,
 } from 'class-validator';
-import { ExcludeBothProps } from 'lib/validators';
+import { ExcludeBothProps } from 'src/lib/validators';
 
 export class SignInDto {
   @IsOptional()

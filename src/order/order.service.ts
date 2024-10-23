@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { PriceService } from 'lib/helpers/price/price.service';
+import { PriceService } from 'src/lib/helpers/price/price.service';
 import { OrderMainInfoDto } from './dto/order-main-info.dto';
 import { env } from 'process';
 import { PrismaService } from '../database/prisma.service';

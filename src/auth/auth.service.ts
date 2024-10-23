@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
-import { CryptoService } from '../../lib/helpers/crypto/crypto.service';
+import { CryptoService } from '../lib/helpers/crypto/crypto.service';
 import { UpdateCredentialsDto } from './dto/update-credentials.dto';
 import { SignUpDto } from './dto/sign-up.dto';
 import { ValidateEmailStrategy } from './strategies/validate-email.strategy';

@@ -6,7 +6,7 @@ import {
   Validate,
   ValidateNested,
 } from 'class-validator';
-import { ExcludeBothProps } from 'lib/validators';
+import { ExcludeBothProps } from 'src/lib/validators';
 import { CreateDishDto } from 'src/dish/dto/create-dish.dto';
 import { isDishExists } from 'src/dish/validators/dish-exists.validator';
 

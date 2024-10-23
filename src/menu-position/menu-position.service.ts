@@ -5,6 +5,7 @@ import { GetUserMenuDto } from 'src/menu/dto/get-user-menu.dto';
 import { PrismaService } from '../database/prisma.service';
 import { PrismaClient } from '@prisma/client';
 import { UserService } from '../user/user.service';
+import { menuPositionDeclaration } from '../lib/utils/menu-parser/menu-parser.interface';
 
 @Injectable()
 export class MenuPositionService {
@@ -149,5 +150,45 @@ export class MenuPositionService {
       status: positions.length === menuPositionsIds.length,
       positions,
     };
+  }
+
+  async findOrCreateMenuPositions(
+    menuPositionsDeclaration: menuPositionDeclaration[],
+    providingCanteenId: number,
+  ) {
+    const menuDishes = await this.dishService.findOrCreateDishes(
+      menuPositionsDeclaration.map(({ dish_description }) => dish_description),
+      providingCanteenId,
+    );
+    const menuPositionsExisting = await this.prismaService.$transaction(
+      menuPositionsDeclaration.map((pos, ind) =>
+        this.prismaService.menu_position.findFirst({
+          where: {
+            price: pos.price,
+            discount: pos.discount,
+            dishId: menuDishes[ind].id,
+          },
+        }),
+      ),
+    );
+    const menuPositionsCreated = await this.prismaService.$transaction(
+      menuPositionsExisting
+        .map((item, index) => {
+          if (!item) {
+            return this.prismaService.menu_position.create({
+              data: {
+                price: menuPositionsDeclaration[index].price,
+                discount: menuPositionsDeclaration[index].discount,
+                dishId: menuDishes[index].id,
+              },
+            });
+          }
+          return null;
+        })
+        .filter((query) => !!query),
+    );
+    return menuPositionsExisting.map(
+      (item) => item ?? menuPositionsCreated.shift(),
+    );
   }
 }
