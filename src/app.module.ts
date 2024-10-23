@@ -18,7 +18,6 @@ import { OrderStatusModule } from './order/order-status/order-status.module';
 import { OrderModule } from './order/order.module';
 import { EmployeeModule } from './employee/employee.module';
 import { DatabaseModule } from './database/database.module';
-import { NestjsFormDataModule } from 'nestjs-form-data';
 
 @Module({
   imports: [
