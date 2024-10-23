@@ -1,6 +1,6 @@
 import { Controller, Get, NotFoundException, Req } from '@nestjs/common';
 import { UserService } from './user.service';
-import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { UserOwnInfoDto } from './dto/user-own-info.dto';
 
 @Controller('user')
