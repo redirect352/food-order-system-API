@@ -151,8 +151,8 @@ model user {
 enum user_role {
   client
   deliveryman
-  orderIssuing
-  menuModerator
-  CExport       @map("1CExport")
+  order_issuing  @map("order-issuing")
+  menu_moderator @map("menu-moderator")
+  CExport       @map("1C-export")
   admin
 }

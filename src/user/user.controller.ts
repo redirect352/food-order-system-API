@@ -7,7 +7,7 @@ import { UserOwnInfoDto } from './dto/user-own-info.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
   @Get()
-  @Roles('client', 'admin', 'menuModerator', 'orderIssuing', 'deliveryman')
+  @Roles('client', 'admin', 'menu_moderator', 'order_issuing', 'deliveryman')
   async getUserInfo(@Req() req) {
     const { office, user, employee } = await this.userService.getUserFullInfo({
       id: req.user.userId,
