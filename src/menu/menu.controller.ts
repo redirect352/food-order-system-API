@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -32,7 +33,7 @@ export class MenuController {
     return this.menuService.createMenu(createMenuDto, req.user?.userId);
   }
 
-  @Roles('admin')
+  @Roles('admin', 'menu_moderator')
   @Post('/create/from-file/word')
   @UseInterceptors(FileInterceptor('file'))
   async createMenuFromWordFile(
@@ -49,18 +50,24 @@ export class MenuController {
     @Body() createMenuFromDocxDto: CreateMenuFromDocxDto,
     @Req() req,
   ) {
+    const { expire, relevantFrom } = createMenuFromDocxDto;
     const menuDeclaration = await this.menuParserService.parseMenuFile(file);
-    const menu = await this.menuService.createMenuWithPositions(
-      menuDeclaration,
-      {
-        authorId: +req.user.userId,
-        providingCanteenId: createMenuFromDocxDto.providingCanteenId,
-        servedOfficesIds: createMenuFromDocxDto.servedOffices,
-      },
-    );
-
-    console.log(createMenuFromDocxDto);
-    return { menu };
+    if (expire) menuDeclaration.expire = expire;
+    if (relevantFrom) menuDeclaration.relevantFrom = relevantFrom;
+    try {
+      const menu = await this.menuService.createMenuWithPositions(
+        menuDeclaration,
+        {
+          authorId: +req.user.userId,
+          providingCanteenId: createMenuFromDocxDto.providingCanteenId,
+          servedOfficesIds: createMenuFromDocxDto.servedOffices,
+        },
+      );
+      return { menu };
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException();
+    }
   }
 
   @Get('/actual')

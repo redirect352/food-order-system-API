@@ -39,7 +39,6 @@ export class BranchOfficeController {
     const res =
       await this.branchOfficeService.updateBranchOffice(updateOfficeDto);
     if (res) {
-      console.log(res);
       return { message: 'updated' };
     } else {
       throw new BadRequestException('Ошибка обновления данных филиала');
@@ -49,7 +48,14 @@ export class BranchOfficeController {
   @Public()
   @Get('/registration-list')
   async getRegistrationList() {
-    const offices = await this.branchOfficeService.getRegistrationList();
+    const offices = await this.branchOfficeService.getBranchOfficeList(false);
+    return offices.map((office) => new BranchOfficeMainInfoDto(office));
+  }
+
+  @Roles('menu_moderator', 'admin')
+  @Get('/canteen-list')
+  async getBranchOfficesList() {
+    const offices = await this.branchOfficeService.getBranchOfficeList(true);
     return offices.map((office) => new BranchOfficeMainInfoDto(office));
   }
 

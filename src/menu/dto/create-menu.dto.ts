@@ -37,8 +37,6 @@ export class CreateMenuDto {
   providingCanteenId: number;
 
   @Transform(({ value }) => {
-    console.log(JSON.parse(value));
-    console.log(123);
     return JSON.parse(value);
   })
   @ArrayMinSize(0)

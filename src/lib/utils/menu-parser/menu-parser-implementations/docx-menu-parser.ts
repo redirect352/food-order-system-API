@@ -26,63 +26,68 @@ export class DocxMenuParser extends MenuFileParser {
     if (buffer instanceof Buffer || typeof buffer === 'string') {
       const extracted = await extractor.extract(buffer);
       if (!extracted) throw new BadRequestException();
-      const documentLines = extracted
-        .getBody()
-        .split(/\n|\t/)
-        .filter((item) => !!item);
-      const dateStr = documentLines[2].slice(
-        documentLines[2].indexOf('на') + 2,
-        documentLines[2].lastIndexOf('г.'),
-      );
-      const menuDate = dayjs(dateStr, 'DD MMMM YYYY', 'ru').tz('Europe/Minsk');
-
-      const startIndex = documentLines.findIndex((item) =>
-        item.includes('Цена'),
-      );
-      if (startIndex === -1)
-        throw new BadRequestException('Некорректный формат файла. ');
-      const result: menuPositionDeclaration[] = [];
-      let currentCategory: string = undefined;
-      for (let i = startIndex + 1; i < documentLines.length; i++) {
-        if (documentLines[i + 1].charCodeAt(0) === 160) {
-          currentCategory = documentLines[i];
-          if (documentLines[i].charCodeAt(0) === 160) break;
-          i++;
-        } else {
-          const name = documentLines[i];
-          const description = documentLines[i + 3].replaceAll('/', '');
-          const quantity = documentLines[i + 1];
-          const price = +documentLines[i + 2]
-            .replace('руб.', '')
-            .replace('коп', '');
-          result.push({
-            price,
-            discount: 0,
-            dish_description: {
-              name,
-              description,
-              quantity,
-              calorieContent: null,
-              bestBeforeDate: null,
-              carbohydrates: null,
-              externalProducer: null,
-              proteins: null,
-              fats: null,
-              categoryName: currentCategory,
-            },
-          });
-          i += 3;
-        }
+      try {
+        return this.parseDocument(extracted);
+      } catch {
+        throw new NotAcceptableException('Некорректный формат файла меню');
       }
-      return {
-        name: null,
-        relevantFrom: menuDate.set('h', 8).toDate(),
-        expire: menuDate.set('h', 10).toDate(),
-        providingCanteenName: '',
-        menuPositions: result,
-      };
     }
-    throw new NotAcceptableException();
+    throw new NotAcceptableException('Некорректный формат файла меню');
+  }
+  parseDocument(document: WordExtractor.Document) {
+    const documentLines = document
+      .getBody()
+      .split(/\n|\t/)
+      .filter((item) => !!item);
+    const dateStr = documentLines[2].slice(
+      documentLines[2].indexOf('на') + 2,
+      documentLines[2].lastIndexOf('г.'),
+    );
+    const menuDate = dayjs(dateStr, 'DD MMMM YYYY', 'ru').tz('Europe/Minsk');
+
+    const startIndex = documentLines.findIndex((item) => item.includes('Цена'));
+    if (startIndex === -1)
+      throw new BadRequestException('Некорректный формат файла. ');
+    const result: menuPositionDeclaration[] = [];
+    let currentCategory: string = undefined;
+    for (let i = startIndex + 1; i < documentLines.length; i++) {
+      if (documentLines[i + 1].charCodeAt(0) === 160) {
+        currentCategory = documentLines[i];
+        if (documentLines[i].charCodeAt(0) === 160) break;
+        i++;
+      } else {
+        const name = documentLines[i];
+        const description = documentLines[i + 3].replaceAll('/', '');
+        const quantity = documentLines[i + 1];
+        const price = +documentLines[i + 2]
+          .replace('руб.', '')
+          .replace('коп', '');
+        result.push({
+          price,
+          discount: 0,
+          dish_description: {
+            name,
+            description,
+            quantity,
+            calorieContent: null,
+            bestBeforeDate: null,
+            carbohydrates: null,
+            externalProducer: null,
+            proteins: null,
+            fats: null,
+            categoryName: currentCategory,
+          },
+        });
+        i += 3;
+      }
+    }
+    return {
+      name: null,
+      relevantFrom: menuDate.set('h', 8).toDate(),
+      expire: menuDate.set('h', 10).toDate(),
+      providingCanteenName: '',
+      menuPositions: result,
+    };
   }
   getParsedExtensions(): string {
     return '.docx';
