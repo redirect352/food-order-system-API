@@ -157,7 +157,7 @@ export class MenuPositionService {
     providingCanteenId: number,
   ) {
     const menuDishes = await this.dishService.findOrCreateDishes(
-      menuPositionsDeclaration.map(({ dish_description }) => dish_description),
+      menuPositionsDeclaration.map(({ dishDescription }) => dishDescription),
       providingCanteenId,
     );
     const menuPositionsExisting = await this.prismaService.$transaction(

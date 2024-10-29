@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   Req,
+  StreamableFile,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -16,11 +17,18 @@ import { GetOrdersListDto } from './dto/get-orders-list.dto';
 import { OrderIdentificationDto } from './dto/order-identification.dto';
 import { OrderFullInfoDto } from './dto/order-full-info.dto';
 import { GetTotalDto } from './dto/get-total.dto';
+import { GetOrdersListForPeriodDto } from './dto/get-orders-list-for-period.dto';
+import * as dayjs from 'dayjs';
+import { Readable } from 'stream';
+import { OrdersExportService } from '../lib/utils/orders-export/orders-export.service';
 
 @Roles('client')
 @Controller('order')
 export class OrderController {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(
+    private readonly orderService: OrderService,
+    private readonly orderExportService: OrdersExportService,
+  ) {}
 
   @Post('create')
   async createOrder(@Body() createOrderDto: CreateOrderDto, @Req() req) {
@@ -31,12 +39,33 @@ export class OrderController {
   async getList(@Query() getActiveOrdersDto: GetOrdersListDto, @Req() req) {
     const { page, pageSize, active } = getActiveOrdersDto;
 
-    return this.orderService.getOrdersList(
+    return this.orderService.getUserOrdersList(
       page,
       pageSize,
       req.user.userId,
       active,
     );
+  }
+
+  @Roles('admin', 'menu_moderator')
+  @Get('/actual/export-list/docx')
+  async exportActualOrdersDocx(@Query() params: GetOrdersListForPeriodDto) {
+    const { periodStart, periodEnd } = params;
+    const dateFormat = 'DD MMMM YYYY HH.mm';
+    const orderDeclaration = await this.orderService.getOrderListForPeriod(
+      params,
+      { closeOrders: true },
+    );
+    const file = Readable.from(
+      await this.orderExportService.exportOrdersToDocx(orderDeclaration, {
+        documentHeading: `Список заказов с ${dayjs(periodStart).locale('ru').format(dateFormat)} по ${dayjs(periodEnd).locale('ru').format(dateFormat)}`,
+      }),
+    );
+    return new StreamableFile(file);
+    // await writeFile(`doc${dayjs(new Date()).format('HH.mm.ss')}.docx`, file);
+    // return {
+    //   orderDeclaration,
+    // };
   }
 
   @Get(':date/:number')

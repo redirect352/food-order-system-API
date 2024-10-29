@@ -5,7 +5,7 @@ export type dishDeclaration = {
 } & Omit<dish, 'id' | 'categoryId' | 'providingCanteenId' | 'imageId'>;
 
 export type menuPositionDeclaration = {
-  dish_description: dishDeclaration;
+  dishDescription: dishDeclaration;
 } & Omit<menu_position, 'id' | 'dishId'>;
 
 export type menuDeclaration = {

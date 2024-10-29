@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -10,14 +11,19 @@ import { OrderMainInfoDto } from './dto/order-main-info.dto';
 import { env } from 'process';
 import { PrismaService } from '../database/prisma.service';
 import { MenuPositionService } from '../menu-position/menu-position.service';
-import { PrismaClient } from '@prisma/client';
-
+import { Prisma, PrismaClient } from '@prisma/client';
+import { GetOrdersListForPeriodDto } from './dto/get-orders-list-for-period.dto';
+import { orderDeclaration } from '../lib/utils/orders-export/orders-export-file-generator.interface';
+import { OrderStatusService } from './order-status/order-status.service';
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class OrderService {
   constructor(
     private readonly priceService: PriceService,
     private readonly prismaService: PrismaService,
     private readonly menuPositionService: MenuPositionService,
+    private readonly orderStatusService: OrderStatusService,
+    private readonly configService: ConfigService,
   ) {}
   private readonly logger = new Logger(OrderService.name);
 
@@ -74,7 +80,7 @@ export class OrderService {
     return res;
   }
 
-  async getOrdersList(
+  async getUserOrdersList(
     page: number,
     pageSize: number,
     userId: number,
@@ -244,5 +250,93 @@ export class OrderService {
       }),
     );
     return await Promise.all(promises);
+  }
+
+  async getOrderListForPeriod(
+    options: GetOrdersListForPeriodDto,
+    extraOptions?: { closeOrders: boolean },
+  ): Promise<orderDeclaration[]> {
+    const { periodEnd, periodStart } = options;
+    const items = await this.prismaService.order.findMany({
+      omit: {
+        statusId: true,
+        clientId: true,
+      },
+      include: {
+        user: { select: { employee: { include: { branch_office: true } } } },
+        order_status: true,
+        order_to_menu_position: {
+          include: {
+            menu_position: {
+              include: {
+                dish: {
+                  include: { dish_category: true },
+                  omit: {
+                    id: true,
+                    imageId: true,
+                    categoryId: true,
+                    providingCanteenId: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { created: 'asc' },
+      where: {
+        created: { gte: periodStart, lte: periodEnd },
+      },
+    });
+    if (extraOptions.closeOrders) {
+      const updated = await this.updateOrdersStatus(
+        this.configService.get('ORDER_CLOSED_STATUS'),
+        {
+          id: { in: items.map(({ id }) => id) },
+        },
+      );
+      if (updated.count !== items.length) {
+        throw new BadRequestException('невозможно обновить статус заказа');
+      }
+    }
+    return items.map(
+      ({ user, order_status, order_to_menu_position, ...etc }) => ({
+        ...etc,
+        canCancel: order_status.canCancel,
+        client: {
+          name: user.employee.name,
+          surname: user.employee.surname,
+          patronymic: user.employee.patronymic,
+          personnelNumber: +user.employee.personnelNumber,
+          officeName: user.employee.branch_office.name,
+        },
+        orderPositions: order_to_menu_position.map(
+          ({ count, menu_position }) => ({
+            count,
+            menuPosition: {
+              dishDescription: {
+                ...menu_position.dish,
+                dish_category: undefined,
+                categoryName: menu_position.dish.dish_category.name,
+              },
+              price: menu_position.price,
+              discount: menu_position.discount,
+            },
+          }),
+        ),
+      }),
+    );
+  }
+
+  async updateOrdersStatus(newStatus: string, where: Prisma.orderWhereInput) {
+    const status = await this.orderStatusService.getByName(newStatus);
+    if (!status)
+      throw new BadRequestException(
+        `Желаемый статус заказа ${newStatus} не существует`,
+      );
+    return this.prismaService.order.updateMany({
+      data: { statusId: status.id },
+      where,
+    });
   }
 }

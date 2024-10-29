@@ -65,7 +65,7 @@ export class DocxMenuParser extends MenuFileParser {
         result.push({
           price,
           discount: 0,
-          dish_description: {
+          dishDescription: {
             name,
             description,
             quantity,
