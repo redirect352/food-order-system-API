@@ -16,6 +16,7 @@ import { GetOrdersListForPeriodDto } from './dto/get-orders-list-for-period.dto'
 import { orderDeclaration } from '../lib/utils/orders-export/orders-export-file-generator.interface';
 import { OrderStatusService } from './order-status/order-status.service';
 import { ConfigService } from '@nestjs/config';
+import { ImageService } from '../image/image.service';
 @Injectable()
 export class OrderService {
   constructor(
@@ -24,6 +25,7 @@ export class OrderService {
     private readonly menuPositionService: MenuPositionService,
     private readonly orderStatusService: OrderStatusService,
     private readonly configService: ConfigService,
+    private readonly imageService: ImageService,
   ) {}
   private readonly logger = new Logger(OrderService.name);
 
@@ -115,7 +117,7 @@ export class OrderService {
   }
 
   async getOrder(issued: string, number: number, userId: string) {
-    return await this.prismaService.order.findFirst({
+    const order = await this.prismaService.order.findFirst({
       omit: {
         id: true,
         statusId: true,
@@ -130,12 +132,10 @@ export class OrderService {
               include: {
                 dish: {
                   omit: {
-                    imageId: true,
                     categoryId: true,
                     providingCanteenId: true,
                   },
                   include: {
-                    image: { select: { name: true, path: true } },
                     providingCanteen: {
                       select: {
                         name: true,
@@ -155,6 +155,18 @@ export class OrderService {
         clientId: +userId,
       },
     });
+    if (order) {
+      const dishIds = order.order_to_menu_position.map(
+        ({ menu_position }) => menu_position.dish.id,
+      );
+      const items = order.order_to_menu_position;
+      await this.imageService.attachImagesToDishes(
+        dishIds,
+        items,
+        (item) => item.menu_position.dish,
+      );
+    }
+    return order;
   }
 
   async cancelOrder(number: number, issued: string, userId: string) {
@@ -199,7 +211,7 @@ export class OrderService {
         number: true,
       },
       where: {
-        issued: new Date(),
+        issued: orderDate,
       },
     });
     return orderNumber._max.number;
@@ -273,7 +285,6 @@ export class OrderService {
                   include: { dish_category: true },
                   omit: {
                     id: true,
-                    imageId: true,
                     categoryId: true,
                     providingCanteenId: true,
                   },

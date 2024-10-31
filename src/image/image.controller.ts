@@ -11,8 +11,9 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImageService } from './image.service';
-import { GetImageListDto, UploadImageDto } from './image.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import { GetImageListDto } from './dto/get-image-list.dto';
+import { UploadImageDto } from './dto/upload-image.dto';
 
 @Roles('admin', 'client')
 @Controller('image')
@@ -36,7 +37,7 @@ export class ImageController {
     file: Express.Multer.File,
     @Body() uploadImageDto: UploadImageDto,
   ) {
-    return this.imageService.saveImageToStatic(file, uploadImageDto.name);
+    return this.imageService.saveImageToStatic(file, uploadImageDto);
   }
 
   @Get('/list')

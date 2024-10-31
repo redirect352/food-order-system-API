@@ -28,10 +28,12 @@ export class AuthService {
     password: string,
   ) {
     if (!login && !email) return null;
-    const { user, active } = await this.userService.getUserAuthData({
+    const authData = await this.userService.getUserAuthData({
       login,
       email,
     });
+    if (!authData) throw new ForbiddenException();
+    const { user, active } = authData;
     if (
       user &&
       active &&
@@ -97,7 +99,7 @@ export class AuthService {
       req.body.id = user.id;
       delete req.body.password;
       delete req.body.login;
-      this.validateEmailStrategy.send(req, res);
+      await this.validateEmailStrategy.send(req, res);
       return;
     } else {
       throw new ForbiddenException('Аккаунт пользователя уже активирован');

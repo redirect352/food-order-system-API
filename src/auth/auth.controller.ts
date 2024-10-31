@@ -150,7 +150,6 @@ export class AuthController {
   @Post('/sign-up/')
   async registerUser(@Body() signUpDto: SignUpDto, @Req() req, @Res() res) {
     const user = await this.authService.register(signUpDto);
-    console.log(user);
     return await this.authService.sendVerificationEmailToUser(user, req, res);
   }
 }

@@ -28,8 +28,10 @@ export class DocxMenuParser extends MenuFileParser {
       if (!extracted) throw new BadRequestException();
       try {
         return this.parseDocument(extracted);
-      } catch {
-        throw new NotAcceptableException('Некорректный формат файла меню');
+      } catch (err) {
+        throw new NotAcceptableException(
+          err.message ?? 'Некорректный формат файла меню',
+        );
       }
     }
     throw new NotAcceptableException('Некорректный формат файла меню');
@@ -59,9 +61,12 @@ export class DocxMenuParser extends MenuFileParser {
         const name = documentLines[i];
         const description = documentLines[i + 3].replaceAll('/', '');
         const quantity = documentLines[i + 1];
-        const price = +documentLines[i + 2]
-          .replace('руб.', '')
-          .replace('коп', '');
+        const price = +[...documentLines[i + 2].matchAll(/\d+/g)].reduce(
+          (prev, item) => prev + item[0],
+          '',
+        );
+        if (isNaN(price))
+          throw new BadRequestException(`Ошибка обработки цены блюда ${name}`);
         result.push({
           price,
           discount: 0,

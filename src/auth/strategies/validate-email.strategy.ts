@@ -27,17 +27,21 @@ export class ValidateEmailStrategy extends PassportStrategy(
       },
       callbackUrl: `${configService.get<string>('BASE_URL')}/email-confirmation`,
       sendMagicLink: async (destination, href) => {
-        this.mailService.sendMail({
-          from: 'Система заказа питания <noreply.sales@minsktrans.by>',
-          to: destination,
-          subject: `Верификация в Системе заказа питания`,
-          html: await mailBuilderService.fillConfirmationTemplate({
-            ACCEPT_LINK: href,
-          }),
-        });
         await userService.updateUserByEmail(destination, {
           verificationEmailSendTime: new Date(),
         });
+        this.mailService
+          .sendMail({
+            from: 'Система заказа питания <noreply.sales@minsktrans.by>',
+            to: destination,
+            subject: `Верификация в Системе заказа питания`,
+            html: await mailBuilderService.fillConfirmationTemplate({
+              ACCEPT_LINK: href,
+            }),
+          })
+          .catch((err) =>
+            this.logger.error(`Cannot send mail to ${destination}` + err),
+          );
         // this.logger.debug(`sending email to ${destination} with Link ${href}`);
       },
       verify: async (payload, callback) =>

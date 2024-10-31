@@ -7,6 +7,7 @@ import { DatabaseModule } from '../database/database.module';
 import { MenuPositionModule } from '../menu-position/menu-position.module';
 import { OrdersExportModule } from '../lib/utils/orders-export/orders-export.module';
 import { ConfigModule } from '@nestjs/config';
+import { ImageModule } from '../image/image.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ConfigModule } from '@nestjs/config';
     MenuPositionModule,
     OrdersExportModule,
     ConfigModule,
+    ImageModule,
   ],
   controllers: [OrderController],
   providers: [OrderService],

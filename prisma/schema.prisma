@@ -35,11 +35,10 @@ model dish {
   externalProducer   String?         @db.VarChar(127)
   providingCanteen   branch_office   @relation(fields: [providingCanteenId], references: [id])
   providingCanteenId Int
-  image              image?          @relation(fields: [imageId], references: [id])
-  imageId            Int?
   dish_category      dish_category?  @relation(fields: [categoryId], references: [id])
   categoryId         Int?
   menu_position      menu_position[]
+  @@index([name(ops: raw("to_tsvector('russian', name)"))], type: Gin)
 }
 
 model dish_category {
@@ -67,9 +66,16 @@ model image {
   path         String   @db.VarChar(255)
   name         String   @db.VarChar(255)
   uploaded     DateTime @default(now())
-  dish         dish[]
   user         user?    @relation(fields: [authorId], references: [id])
   authorId     Int? 
+  tags         image_tag[]
+}
+
+model image_tag{
+  id           Int            @id @default(autoincrement())
+  tagName      String         @db.VarChar(127) @unique()
+  created      DateTime       @default(now()) 
+  images       image[]
 }
 
 model menu {

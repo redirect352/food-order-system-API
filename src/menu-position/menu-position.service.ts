@@ -6,6 +6,7 @@ import { PrismaService } from '../database/prisma.service';
 import { PrismaClient } from '@prisma/client';
 import { UserService } from '../user/user.service';
 import { menuPositionDeclaration } from '../lib/utils/menu-parser/menu-parser.interface';
+import { ImageService } from '../image/image.service';
 
 @Injectable()
 export class MenuPositionService {
@@ -13,6 +14,7 @@ export class MenuPositionService {
     private readonly prismaService: PrismaService,
     private readonly dishService: DishService,
     private readonly userService: UserService,
+    private readonly imageService: ImageService,
   ) {}
   async createMenuPosition(createMenuPositionDto: CreateMenuPositionDto) {
     const { dishId, newDish, ...insertValues } = createMenuPositionDto;
@@ -66,12 +68,10 @@ export class MenuPositionService {
         dish: {
           include: {
             providingCanteen: { select: { name: true } },
-            image: { select: { name: true, path: true } },
             dish_category: true,
           },
           omit: {
             providingCanteenId: true,
-            imageId: true,
           },
         },
       },
@@ -81,6 +81,12 @@ export class MenuPositionService {
     });
     const count = await await this.prismaService.menu_position.count({ where });
     const pageCount = Math.ceil(count / pageSize);
+    const ids = items.map(({ dish }) => dish.id);
+    await this.imageService.attachImagesToDishes(
+      ids,
+      items,
+      (item) => item.dish,
+    );
     return {
       pages: pageCount,
       items,
@@ -106,7 +112,6 @@ export class MenuPositionService {
         },
       },
     });
-    // console.dir(categories, { depth: null });
     const ids = new Set(categories.map(({ dish }) => dish.dish_category.id));
     return categories
       .map(({ dish }) => ({

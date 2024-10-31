@@ -68,7 +68,7 @@ export class EmployeeService {
     try {
       await this.prismaService.$transaction(async (tx) => {
         await tx.$queryRawTyped(setOfficeEmployeesInactive(officeId));
-        tx.employee.createMany({
+        await tx.employee.createMany({
           data: content,
           skipDuplicates: true,
         });
