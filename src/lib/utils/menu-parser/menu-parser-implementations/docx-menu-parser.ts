@@ -45,7 +45,7 @@ export class DocxMenuParser extends MenuFileParser {
       documentLines[2].indexOf('на') + 2,
       documentLines[2].lastIndexOf('г.'),
     );
-    const menuDate = dayjs(dateStr, 'DD MMMM YYYY', 'ru').tz('Europe/Minsk');
+    const menuDate = dayjs(dateStr, 'D MMMM YYYY', 'ru').tz('Europe/Minsk');
 
     const startIndex = documentLines.findIndex((item) => item.includes('Цена'));
     if (startIndex === -1)
