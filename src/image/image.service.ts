@@ -1,53 +1,52 @@
 import { Injectable } from '@nestjs/common';
-import { promises as fs } from 'fs';
-import { join } from 'path';
-import { UserService } from 'src/user/user.service';
 import { PrismaService } from '../database/prisma.service';
 import { getDishImages } from '@prisma/client/sql';
 import { ConfigService } from '@nestjs/config';
 import { dish } from '@prisma/client';
 import { UploadImageDto } from './dto/upload-image.dto';
+import { extname } from 'path';
 
 @Injectable()
 export class ImageService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly userService: UserService,
     private readonly configService: ConfigService,
   ) {}
 
-  async saveImageToStatic(
-    file: Express.Multer.File,
+  async saveImages(
+    files: Array<Express.Multer.File>,
     uploadImageDto: UploadImageDto,
+    authorId?: number,
   ) {
     const { name, tags } = uploadImageDto;
-    const originalName = file.originalname;
-    const fileName =
-      originalName.slice(0, originalName.lastIndexOf('.')) +
-      `{${new Date().getTime()}}` +
-      '.' +
-      originalName.slice(
-        originalName.lastIndexOf('.') + 1,
-        originalName.length,
-      );
-    await fs.writeFile(
-      join(__dirname, '..', '..', '..', 'static', 'images', fileName),
-      file.buffer,
+    const images = await Promise.all(
+      files.map(({ filename }) =>
+        this.prismaService.image.create({
+          data: {
+            name: name ?? filename.slice(0, filename.lastIndexOf('.')),
+            path: filename,
+            tags: tags
+              ? {
+                  connectOrCreate: tags.map((tagName) => ({
+                    where: { tagName },
+                    create: { tagName },
+                  })),
+                }
+              : undefined,
+            authorId,
+          },
+          omit: { authorId: true },
+        }),
+      ),
     );
-    const image = await this.prismaService.image.create({
-      data: {
-        name: name ?? file.originalname.slice(0, originalName.lastIndexOf('.')),
-        path: fileName,
-        authorId: (await this.userService.findByLogin('admin'))?.id,
-        tags: {
-          connectOrCreate: tags.map((tagName) => ({
-            where: { tagName },
-            create: { tagName },
-          })),
-        },
-      },
-    });
-    return { fileName };
+    return images;
+  }
+
+  getImageSaveName(req, file: Express.Multer.File, callback) {
+    const { originalname } = file;
+    const ext = extname(originalname);
+    const name = originalname.replace(ext, '');
+    callback(null, `${name}-${new Date().getTime()}${ext}`);
   }
 
   async getList(page: number, pageSize: number) {

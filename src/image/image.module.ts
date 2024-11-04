@@ -1,13 +1,30 @@
 import { Module } from '@nestjs/common';
 import { ImageService } from './image.service';
 import { ImageController } from './image.controller';
-import { UserModule } from 'src/user/user.module';
 import { IsImageExistsConstraint } from './validators/image-exists.validator';
 import { DatabaseModule } from '../database/database.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MulterModule } from '@nestjs/platform-express';
+import * as multer from 'multer';
 
 @Module({
-  imports: [UserModule, DatabaseModule, ConfigModule],
+  imports: [
+    DatabaseModule,
+    ConfigModule,
+    MulterModule.registerAsync({
+      imports: [ConfigModule, ImageModule],
+      useFactory: async (
+        configService: ConfigService,
+        imageService: ImageService,
+      ) => ({
+        storage: multer.diskStorage({
+          destination: configService.get('DISH_IMAGES_SAVE_PATH'),
+          filename: imageService.getImageSaveName,
+        }),
+      }),
+      inject: [ConfigService, ImageService],
+    }),
+  ],
   providers: [ImageService, IsImageExistsConstraint],
   controllers: [ImageController],
   exports: [ImageService],

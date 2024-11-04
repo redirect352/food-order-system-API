@@ -6,23 +6,28 @@ import {
   ParseFilePipeBuilder,
   Post,
   Query,
-  UploadedFile,
+  Req,
+  UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { ImageService } from './image.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { GetImageListDto } from './dto/get-image-list.dto';
 import { UploadImageDto } from './dto/upload-image.dto';
+import { ConfigService } from '@nestjs/config';
 
-@Roles('admin', 'client')
+@Roles('admin', 'menu_moderator')
 @Controller('image')
 export class ImageController {
-  constructor(private readonly imageService: ImageService) {}
+  constructor(
+    private readonly imageService: ImageService,
+    private readonly configService: ConfigService,
+  ) {}
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
-  uploadFile(
-    @UploadedFile(
+  @UseInterceptors(FilesInterceptor('files', 5))
+  async uploadFileTest(
+    @UploadedFiles(
       new ParseFilePipeBuilder()
         .addFileTypeValidator({
           fileType: 'jpeg|png|jpg',
@@ -34,10 +39,16 @@ export class ImageController {
           errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
         }),
     )
-    file: Express.Multer.File,
+    files: Array<Express.Multer.File>,
     @Body() uploadImageDto: UploadImageDto,
+    @Req() req,
   ) {
-    return this.imageService.saveImageToStatic(file, uploadImageDto);
+    const result = await this.imageService.saveImages(
+      files,
+      uploadImageDto,
+      req.user.userId,
+    );
+    return result;
   }
 
   @Get('/list')
