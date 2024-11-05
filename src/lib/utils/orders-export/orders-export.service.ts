@@ -16,9 +16,9 @@ export class OrdersExportService {
     options?: IOrdersExportInFileOptions,
   ) {
     const extName = '.docx';
-    for (const parser of this.generators) {
-      if (parser.getResultFileExtension().toLowerCase() === extName) {
-        return parser.parseFile(ordersDeclaration, options);
+    for (const generator of this.generators) {
+      if (generator.getResultFileExtension().toLowerCase() === extName) {
+        return generator.parseFile(ordersDeclaration, options);
       }
     }
     throw new NotAcceptableException(

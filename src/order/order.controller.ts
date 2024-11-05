@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   Req,
+  Res,
   StreamableFile,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
@@ -49,23 +50,30 @@ export class OrderController {
 
   @Roles('admin', 'menu_moderator')
   @Get('/actual/export-list/docx')
-  async exportActualOrdersDocx(@Query() params: GetOrdersListForPeriodDto) {
+  async exportActualOrdersDocx(
+    @Query() params: GetOrdersListForPeriodDto,
+    @Res({ passthrough: true }) res,
+  ) {
     const { periodStart, periodEnd } = params;
     const dateFormat = 'DD MMMM YYYY HH.mm';
     const orderDeclaration = await this.orderService.getOrderListForPeriod(
       params,
       { closeOrders: true },
     );
-    const file = Readable.from(
-      await this.orderExportService.exportOrdersToDocx(orderDeclaration, {
+    const buffer = await this.orderExportService.exportOrdersToDocx(
+      orderDeclaration,
+      {
         documentHeading: `Список заказов с ${dayjs(periodStart).locale('ru').format(dateFormat)} по ${dayjs(periodEnd).locale('ru').format(dateFormat)}`,
-      }),
+      },
     );
+    const file = Readable.from(buffer);
+    const filename = `orders(${dayjs(periodStart).format('DD.MM.YY HH.mm')} - ${dayjs(periodEnd).format('DD.MM.YY HH.mm')}).docx`;
+    res.set({
+      'Content-Type': 'application/octet-stream',
+      'Content-Disposition': `attachment; filename=${filename}`,
+      'Access-Control-Expose-Headers': 'Content-Disposition',
+    });
     return new StreamableFile(file);
-    // await writeFile(`doc${dayjs(new Date()).format('HH.mm.ss')}.docx`, file);
-    // return {
-    //   orderDeclaration,
-    // };
   }
 
   @Get(':date/:number')
