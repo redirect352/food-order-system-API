@@ -39,14 +39,13 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('/sign-in')
   async signIn(@Req() req, @Res() res) {
-    const user: user = req.user;
-    if (user.isPasswordTemporary) {
-      await this.authService.sendVerificationEmailToUser(user, req, res);
-      return;
-    }
-    const result = await this.authService.login(req.user);
-    res.status(200);
-    res.send({ ...result, statusCode: 200 });
+    return await this.authService.login(req.user, req, res);
+  }
+
+  @UseGuards(AuthGuard('refresh-jwt'))
+  @Post('/refresh')
+  async refreshToken(@Req() req, @Res() res) {
+    return await this.authService.login(req.user, req, res, false);
   }
 
   @Post('/reset-password')

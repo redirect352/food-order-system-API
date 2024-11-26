@@ -12,6 +12,9 @@ import { SignUpDto } from './dto/sign-up.dto';
 import { ValidateEmailStrategy } from './strategies/validate-email.strategy';
 import e from 'express';
 import { user } from '@prisma/client';
+import refreshJwtConfig from './config/refresh-jwt.config';
+import { ConfigType } from '@nestjs/config';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +25,8 @@ export class AuthService {
     @Inject('FirstAuthJwtService')
     private readonly firstTimeJwtService: JwtService,
     private validateEmailStrategy: ValidateEmailStrategy,
+    @Inject(refreshJwtConfig.KEY)
+    private refreshTokenConfig: ConfigType<typeof refreshJwtConfig>,
   ) {}
   async validateUser(
     { login, email }: { login?: string; email?: string },
@@ -52,12 +57,33 @@ export class AuthService {
     return null;
   }
 
-  async login(user: { id: number; role: string }) {
+  async login(
+    user: user,
+    req: e.Request,
+    res: e.Response,
+    updateRefresh: boolean = true,
+  ) {
+    if (user.isPasswordTemporary) {
+      await this.sendVerificationEmailToUser(user, req, res);
+      return;
+    }
     const payload = { id: user.id, role: user.role };
-    return {
+    const result: any = {
       role: user.role,
       access_token: await this.jwtService.signAsync(payload),
+      statusCode: 200,
     };
+    if (updateRefresh) {
+      result.refresh_token = await this.jwtService.signAsync(
+        payload,
+        this.refreshTokenConfig,
+      );
+      await this.userService.updateUserById(user.id, {
+        refreshTokenHash: await argon2.hash(result.refresh_token),
+      });
+    }
+    res.status(200);
+    res.send(result);
   }
 
   async generateFirstAuthToken(user: { id: number }) {

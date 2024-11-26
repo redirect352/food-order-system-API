@@ -10,47 +10,29 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { APP_GUARD } from '@nestjs/core';
 import { ValidateEmailStrategy } from './strategies/validate-email.strategy';
 import { FirstAuthStrategy } from './strategies/first-auth.strategy';
-import { JwtAuthGuard } from './guards/jwt.quard';
+import { JwtAuthGuard } from './guards/jwt.guard';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { EmailBuilderModule } from 'src/lib/helpers/email-builder/email-builder.module';
 import { PasswordResetStrategy } from './strategies/password-reset.strategy';
 import { TimeCheckerModule } from 'src/lib/helpers/time-checker/time-checker.module';
 import { LocalEmailStrategy } from './strategies/local-email.strategy';
 import { EmployeeModule } from 'src/employee/employee.module';
+import jwtConfig from './config/jwt.config';
+import mailerConfig from './config/mailer.config';
+import refreshJwtConfig from './config/refresh-jwt.config';
+import { RefreshJwtStrategy } from './strategies/refresh-token.strategy';
 
 @Module({
   imports: [
     UserModule,
     ConfigModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET_KEY'),
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRE'),
-        },
-      }),
-      inject: [ConfigService],
-    }),
-    MailerModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        transport: {
-          host: configService.get<string>('EMAIL_HOST'),
-          auth: {
-            user: configService.get<string>('EMAIL_USERNAME'),
-            pass: configService.get<string>('EMAIL_PASSWORD'),
-          },
-          secure: false,
-          port: 25,
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtModule.registerAsync(jwtConfig.asProvider()),
+    MailerModule.forRootAsync(mailerConfig.asProvider()),
     CryptoModule,
     EmailBuilderModule,
     TimeCheckerModule,
     EmployeeModule,
+    ConfigModule.forFeature(refreshJwtConfig),
   ],
   controllers: [AuthController],
   providers: [
@@ -61,6 +43,7 @@ import { EmployeeModule } from 'src/employee/employee.module';
     ValidateEmailStrategy,
     FirstAuthStrategy,
     PasswordResetStrategy,
+    RefreshJwtStrategy,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
@@ -68,12 +51,7 @@ import { EmployeeModule } from 'src/employee/employee.module';
     {
       provide: 'FirstAuthJwtService',
       useFactory: (configService: ConfigService) => {
-        return new JwtService({
-          secret: configService.get<string>('JWT_FIRST_AUTH_SECRET_KEY'),
-          signOptions: {
-            expiresIn: configService.get<string>('JWT_FIRST_AUTH_EXPIRE'),
-          },
-        });
+        return new JwtService(configService.get('first-auth-jwt'));
       },
       inject: [ConfigService],
     },

@@ -140,6 +140,7 @@ model user {
   id                        Int       @id @default(autoincrement())
   login                     String    @unique() @db.VarChar(127)
   password                  String    @db.VarChar(255)
+  refreshTokenHash          String?   @db.VarChar(255)
   email                     String    @unique() @db.VarChar(255)
   role                      user_role @default(client)
   isPasswordTemporary       Boolean   @default(true)
