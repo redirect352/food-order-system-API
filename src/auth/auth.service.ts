@@ -86,6 +86,12 @@ export class AuthService {
     res.send(result);
   }
 
+  async logout(id: number) {
+    await this.userService.updateUserById(id, {
+      refreshTokenHash: null,
+    });
+  }
+
   async generateFirstAuthToken(user: { id: number }) {
     const payload = { id: user.id };
     return {

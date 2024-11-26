@@ -25,6 +25,7 @@ import { EmployeeService } from 'src/employee/employee.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { user } from '@prisma/client';
 import { CheckFirstAuthResponseDto } from './dto/check-first-auth-response.dto';
+import { Roles } from './decorators/roles.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -46,6 +47,19 @@ export class AuthController {
   @Post('/refresh')
   async refreshToken(@Req() req, @Res() res) {
     return await this.authService.login(req.user, req, res, false);
+  }
+
+  @Roles(
+    'order_issuing',
+    'admin',
+    'client',
+    'deliveryman',
+    'menu_moderator',
+    'CExport',
+  )
+  @Post('/logout')
+  async logout(@Req() req) {
+    return await this.authService.logout(req.user.userId);
   }
 
   @Post('/reset-password')
