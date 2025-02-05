@@ -88,7 +88,8 @@ export class OrderController {
     }
     return new OrderFullInfoDto(res);
   }
-  @Get('/total/')
+
+  @Get('/total')
   async getMonthTotal(@Query() getTotalDto: GetTotalDto, @Req() req) {
     const { periodEnd, periodStart } = getTotalDto;
     const now = new Date();

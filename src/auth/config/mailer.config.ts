@@ -10,8 +10,9 @@ export default registerAs(
         user: process.env.EMAIL_USERNAME,
         pass: process.env.EMAIL_PASSWORD,
       },
-      secure: false,
-      port: 25,
+      ignoreTLS: !!process.env.EMAIL_SECURE_STATE,
+      secure: !!process.env.EMAIL_SECURE_STATE,
+      port: +process.env.EMAIL_PORT,
     },
   }),
 );

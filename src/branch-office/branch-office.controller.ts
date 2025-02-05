@@ -59,6 +59,13 @@ export class BranchOfficeController {
     return offices.map((office) => new BranchOfficeMainInfoDto(office));
   }
 
+  @Roles('client')
+  @Get('/delivery-points')
+  async getDeliveryPointsList() {
+    const offices = await this.branchOfficeService.getBranchOfficeList(false);
+    return offices.map((office) => new BranchOfficeMainInfoDto(office));
+  }
+
   @Get('/get-by-name/:name')
   async getBranchOffice(@Param() getBranchOfficeDto: GetBranchOfficeDto) {
     const office =

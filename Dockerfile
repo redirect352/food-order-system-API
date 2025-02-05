@@ -19,5 +19,6 @@ COPY . .
 EXPOSE ${PORT}
 
 # Run the application.
+RUN npx prisma generate --sql
 CMD npm run start:dev
 

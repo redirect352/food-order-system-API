@@ -127,11 +127,13 @@ export class UserService {
       );
     }
     const user = await this.prismaService.user.findFirst({
-      where: { employeeId: employee.id },
+      where: {
+        OR: [{ employeeId: employee.id }, { login }, { email }],
+      },
     });
     if (user) {
       throw new ForbiddenException(
-        'Невозможно создать аккаунт. Сотрудник с указанными данными уже зарегистрирован',
+        'Невозможно создать аккаунт. Сотрудник с указанным login или email уже зарегистрирован',
       );
     }
     const result = await this.prismaService.$transaction(
