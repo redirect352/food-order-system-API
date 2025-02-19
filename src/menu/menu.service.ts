@@ -107,11 +107,7 @@ export class MenuService {
 
   async getActualMenuForUser(getUserMenuDto: GetUserMenuDto, userId?: number) {
     if (!userId) throw new UnauthorizedException();
-    const office = await this.userService.getUserOffice(userId);
-    const menuList = await this.menuPositionService.getActual(
-      office.id,
-      getUserMenuDto,
-    );
+    const menuList = await this.menuPositionService.getActual(getUserMenuDto);
     if (!menuList.items)
       return {
         items: [],

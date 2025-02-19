@@ -39,8 +39,9 @@ export class MenuPositionService {
     });
   }
 
-  async getActual(officeId: number, getUserMenuDto: GetUserMenuDto) {
-    const { page, pageSize, dishCategoryId, productType } = getUserMenuDto;
+  async getActual(getUserMenuDto: GetUserMenuDto) {
+    const { page, pageSize, dishCategoryId, productType, destinationOfficeId } =
+      getUserMenuDto;
     let productTypeFilter: object | undefined = undefined;
     if (productType && productType.length === 1) {
       if (productType[0] === 'alien') {
@@ -52,7 +53,7 @@ export class MenuPositionService {
     const where = {
       menus: {
         some: {
-          served_offices: { some: { id: officeId } },
+          served_offices: { some: { id: destinationOfficeId } },
           relevantFrom: { lt: new Date() },
           expire: { gt: new Date() },
         },

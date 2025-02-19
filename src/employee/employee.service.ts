@@ -101,7 +101,13 @@ export class EmployeeService {
     personnelNumber: string;
   }) {
     return this.prismaService.employee.findFirst({
-      where,
+      where: {
+        ...where,
+        surname: {
+          equals: where.surname,
+          mode: 'insensitive',
+        },
+      },
     });
   }
 }

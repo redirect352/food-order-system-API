@@ -269,6 +269,7 @@ export class OrderService {
     extraOptions?: { closeOrders: boolean },
   ): Promise<orderDeclaration[]> {
     const { periodEnd, periodStart } = options;
+    console.log(options);
     const items = await this.prismaService.order.findMany({
       omit: {
         statusId: true,
