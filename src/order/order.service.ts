@@ -100,6 +100,7 @@ export class OrderService {
         clientId: true,
       },
       include: {
+        deliveryDestination: true,
         order_status: true,
         order_to_menu_position: {
           include: {
@@ -112,6 +113,7 @@ export class OrderService {
       skip: (page - 1) * pageSize,
       take: pageSize,
     });
+    console.log(items);
     const count = await await this.prismaService.order.count({
       where: { clientId: userId, order_status: { active: active } },
     });
@@ -130,6 +132,7 @@ export class OrderService {
       },
       include: {
         order_status: true,
+        deliveryDestination: true,
         order_to_menu_position: {
           include: {
             menu_position: {

@@ -39,13 +39,13 @@ export class OrderController {
   @Get('list')
   async getList(@Query() getActiveOrdersDto: GetOrdersListDto, @Req() req) {
     const { page, pageSize, active } = getActiveOrdersDto;
-
-    return this.orderService.getUserOrdersList(
+    const result = await this.orderService.getUserOrdersList(
       page,
       pageSize,
       req.user.userId,
       active,
     );
+    return result;
   }
 
   @Roles('admin', 'menu_moderator')

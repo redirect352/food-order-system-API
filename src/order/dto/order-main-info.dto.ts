@@ -1,3 +1,6 @@
+import { branch_office } from '@prisma/client';
+import { BranchOfficeMainInfoDto } from '../../branch-office/dto/branch-office-main-info.dto';
+
 export type OrderPositionMainInfo = {
   count: number;
   price: number;
@@ -13,6 +16,7 @@ export class OrderMainInfoDto {
   public updated: Date;
   public created: Date;
   public orderPositions: Array<OrderPositionMainInfo>;
+  public deliveryDestination: BranchOfficeMainInfoDto;
 
   public constructor(order: any) {
     this.number = order.number;
@@ -28,5 +32,8 @@ export class OrderMainInfoDto {
       discount: pos.menu_position.discount,
       name: pos.menu_position.dish?.name,
     }));
+    this.deliveryDestination = new BranchOfficeMainInfoDto(
+      order.deliveryDestination as branch_office,
+    );
   }
 }

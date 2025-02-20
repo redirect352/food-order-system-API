@@ -1,4 +1,6 @@
 import { MenuPositionItem } from 'src/menu/dto/menu-position-item.dto';
+import { BranchOfficeMainInfoDto } from '../../branch-office/dto/branch-office-main-info.dto';
+import { branch_office } from '@prisma/client';
 export type OrderPositionFullInfo = {
   count: number;
   menuPosition: MenuPositionItem;
@@ -12,6 +14,7 @@ export class OrderFullInfoDto {
   public created: Date;
   public canCancel: boolean;
   public orderPositions: Array<OrderPositionFullInfo>;
+  public deliveryDestination: BranchOfficeMainInfoDto;
 
   public constructor(order: any) {
     this.number = order.number;
@@ -25,5 +28,8 @@ export class OrderFullInfoDto {
       count: pos.count,
       menuPosition: new MenuPositionItem(pos.menu_position),
     }));
+    this.deliveryDestination = new BranchOfficeMainInfoDto(
+      order.deliveryDestination as branch_office,
+    );
   }
 }
