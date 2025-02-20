@@ -1,4 +1,5 @@
-import { IsDate } from 'class-validator';
+import { IsDate, IsInt, Min } from 'class-validator';
+import { isBranchOfficeExists } from '../../branch-office/validators/branch-office-exists.validator';
 
 export class GetOrdersListForPeriodDto {
   @IsDate()
@@ -6,4 +7,9 @@ export class GetOrdersListForPeriodDto {
 
   @IsDate()
   periodEnd: Date;
+
+  @IsInt()
+  @Min(1)
+  @isBranchOfficeExists()
+  deliveryDestinationId: number;
 }

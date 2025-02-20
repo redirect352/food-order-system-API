@@ -50,8 +50,8 @@ export class DocxOrderGenerator extends OrdersExportFileGenerator {
 
   getOrderRow(orderDeclaration: orderDeclaration) {
     const { number, issued, orderPositions, client } = orderDeclaration;
-    const { surname, name, patronymic, personnelNumber } = client;
-    const clientFullName = `${surname} ${name.charAt(0).toUpperCase()}.${patronymic.charAt(0).toUpperCase()}. (${personnelNumber})`;
+    const { surname, name, patronymic, personnelNumber, officeName } = client;
+    const clientFullName = `${surname} ${name.charAt(0).toUpperCase()}.${patronymic.charAt(0).toUpperCase()}. (${personnelNumber}, ${officeName})`;
     const issuedString = dayjs(issued).format('DD.MM.YY');
     const numberLabel = `${number}-${issuedString}`;
     return orderPositions.map(

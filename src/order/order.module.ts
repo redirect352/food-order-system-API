@@ -8,6 +8,7 @@ import { MenuPositionModule } from '../menu-position/menu-position.module';
 import { OrdersExportModule } from '../lib/utils/orders-export/orders-export.module';
 import { ConfigModule } from '@nestjs/config';
 import { ImageModule } from '../image/image.module';
+import { BranchOfficeModule } from '../branch-office/branch-office.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ImageModule } from '../image/image.module';
     OrdersExportModule,
     ConfigModule,
     ImageModule,
+    BranchOfficeModule,
   ],
   controllers: [OrderController],
   providers: [OrderService],

@@ -22,12 +22,14 @@ import { GetOrdersListForPeriodDto } from './dto/get-orders-list-for-period.dto'
 import * as dayjs from 'dayjs';
 import { Readable } from 'stream';
 import { OrdersExportService } from '../lib/utils/orders-export/orders-export.service';
+import { BranchOfficeService } from '../branch-office/branch-office.service';
 
 @Roles('client')
 @Controller('order')
 export class OrderController {
   constructor(
     private readonly orderService: OrderService,
+    private readonly branchOfficeService: BranchOfficeService,
     private readonly orderExportService: OrdersExportService,
   ) {}
 
@@ -60,17 +62,22 @@ export class OrderController {
       params,
       { closeOrders: true },
     );
+    const destinationOffice =
+      await this.branchOfficeService.getBranchOfficeById(
+        params.deliveryDestinationId,
+      );
     const buffer = await this.orderExportService.exportOrdersToDocx(
       orderDeclaration,
       {
-        documentHeading: `Список заказов с ${dayjs(periodStart).locale('ru').format(dateFormat)} по ${dayjs(periodEnd).locale('ru').format(dateFormat)}`,
+        documentHeading: `Список заказов с ${dayjs(periodStart).locale('ru').format(dateFormat)} по ${dayjs(periodEnd).locale('ru').format(dateFormat)} по филиалу ${destinationOffice.name}`,
       },
     );
     const file = Readable.from(buffer);
-    const filename = `orders(${dayjs(periodStart).format('DD.MM.YY HH.mm')} - ${dayjs(periodEnd).format('DD.MM.YY HH.mm')}).docx`;
+
+    const filename = `Заказы-${destinationOffice.name}-(${dayjs(periodStart).format('DD.MM.YY HH.mm')} - ${dayjs(periodEnd).format('DD.MM.YY HH.mm')}).docx`;
     res.set({
       'Content-Type': 'application/octet-stream',
-      'Content-Disposition': `attachment; filename=${filename}`,
+      'Content-Disposition': `attachment; filename=${encodeURIComponent(filename)}`,
       'Access-Control-Expose-Headers': 'Content-Disposition',
     });
     return new StreamableFile(file);

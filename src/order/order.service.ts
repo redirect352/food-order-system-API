@@ -280,8 +280,7 @@ export class OrderService {
     options: GetOrdersListForPeriodDto,
     extraOptions?: { closeOrders: boolean },
   ): Promise<orderDeclaration[]> {
-    const { periodEnd, periodStart } = options;
-    console.log(options);
+    const { periodEnd, periodStart, deliveryDestinationId } = options;
     const items = await this.prismaService.order.findMany({
       omit: {
         statusId: true,
@@ -290,6 +289,7 @@ export class OrderService {
       include: {
         user: { select: { employee: { include: { branch_office: true } } } },
         order_status: true,
+        deliveryDestination: true,
         order_to_menu_position: {
           include: {
             menu_position: {
@@ -309,6 +309,7 @@ export class OrderService {
       },
       orderBy: { created: 'asc' },
       where: {
+        deliveryDestinationId,
         created: { gte: periodStart, lte: periodEnd },
       },
     });
