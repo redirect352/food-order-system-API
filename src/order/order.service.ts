@@ -30,7 +30,11 @@ export class OrderService {
   private readonly logger = new Logger(OrderService.name);
 
   async createOrder(createOrderDto: CreateOrderDto, userId: number) {
-    const { menuPositions, counts: menuPositionCounts } = createOrderDto;
+    const {
+      menuPositions,
+      counts: menuPositionCounts,
+      deliveryDestinationId,
+    } = createOrderDto;
     const defaultOrderStatus = process.env.ORDER_CREATED_STATUS;
 
     const res = await this.prismaService.$transaction(async (tx) => {
@@ -62,6 +66,7 @@ export class OrderService {
           fullPrice: fullPrice,
           status: defaultOrderStatus,
           userId,
+          deliveryDestinationId,
         },
         tx as PrismaClient,
       );
@@ -223,6 +228,7 @@ export class OrderService {
       fullPrice: number;
       status: string;
       userId: number;
+      deliveryDestinationId: number;
     },
     prismaClient: PrismaClient = this.prismaService,
   ) {
@@ -238,6 +244,9 @@ export class OrderService {
         },
         user: {
           connect: { id: data.userId },
+        },
+        deliveryDestination: {
+          connect: { id: data.deliveryDestinationId },
         },
       },
     });

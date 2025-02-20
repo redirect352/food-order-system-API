@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["typedSql", "omitApi"]
+  previewFeatures = ["typedSql"]
 }
 
 datasource db {
@@ -20,6 +20,7 @@ model branch_office {
   employees           employee[]
   providedMenus       menu[]
   consumedMenus       menu[] @relation("MenuForConsumption")
+  order order[]
 }
 
 model dish {
@@ -38,7 +39,7 @@ model dish {
   dish_category      dish_category?  @relation(fields: [categoryId], references: [id])
   categoryId         Int?
   menu_position      menu_position[]
-  @@index([name(ops: raw("to_tsvector('russian', name)"))], type: Gin)
+  // @@index([name( raw("to_tsvector('russian', name)"))], type: Gin) 
 }
 
 model dish_category {
@@ -112,6 +113,8 @@ model order {
   statusId               Int
   user                   user                     @relation(fields: [clientId], references: [id])
   clientId               Int
+  deliveryDestination    branch_office                     @relation(fields: [deliveryDestinationId], references: [id])
+  deliveryDestinationId  Int
   order_to_menu_position order_to_menu_position[]
   updated                DateTime  @updatedAt
   created                DateTime  @default(now())

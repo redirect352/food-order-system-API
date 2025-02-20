@@ -131,10 +131,10 @@ export class MenuPositionService {
     menuPositionsIds: number[],
     prismaClient: PrismaClient = this.prismaService,
   ) {
-    const canteenId = await this.userService.findUserServingCanteen(
-      userId,
-      prismaClient,
-    );
+    // const canteenId = await this.userService.findUserServingCanteen(
+    //   userId,
+    //   prismaClient,
+    // );
     const positions = await prismaClient.menu_position.findMany({
       select: {
         id: true,
@@ -145,7 +145,7 @@ export class MenuPositionService {
         id: { in: menuPositionsIds },
         menus: {
           some: {
-            providingCanteenId: canteenId,
+            // providingCanteenId: canteenId,
             relevantFrom: { lt: new Date() },
             expire: { gt: new Date() },
           },
