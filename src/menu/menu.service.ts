@@ -11,6 +11,7 @@ import { MenuPositionItem } from './dto/menu-position-item.dto';
 import { PrismaService } from '../database/prisma.service';
 import { menuDeclaration } from '../lib/utils/menu-parser/menu-parser.interface';
 import { BranchOfficeService } from '../branch-office/branch-office.service';
+import { GetMenuListDto } from './dto/get-menu-list.dto';
 
 @Injectable()
 export class MenuService {
@@ -125,5 +126,32 @@ export class MenuService {
     if (!userId) throw new UnauthorizedException();
     const userOffice = await this.userService.getUserOffice(userId);
     return this.menuPositionService.getActualCategories(userOffice.id);
+  }
+
+  async getMenuListDto(getMenuListDto: GetMenuListDto) {
+    const { destinationOfficeId, page, pageSize } = getMenuListDto;
+    const count = await this.prismaService.menu.count({
+      where: {
+        served_offices: { some: { id: destinationOfficeId } },
+      },
+    });
+    const menuList = await this.prismaService.menu.findMany({
+      include: {
+        // _count: { select: { menu_positions: true, served_offices: true } },
+        _count: true,
+        providingCanteen_office: true,
+        user: { select: { employee: true } },
+      },
+      where: {
+        served_offices: { some: { id: destinationOfficeId } },
+      },
+      take: pageSize,
+      skip: (page - 1) * pageSize,
+      orderBy: { created: 'desc' },
+    });
+    return {
+      count,
+      menuList,
+    };
   }
 }

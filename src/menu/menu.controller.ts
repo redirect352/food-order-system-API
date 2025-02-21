@@ -18,6 +18,7 @@ import { GetUserMenuDto } from './dto/get-user-menu.dto';
 import { MenuParserService } from '../lib/utils/menu-parser/menu-parser.service';
 import { CreateMenuFromDocxDto } from './dto/create-menu-from-docx.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { MenuListDto } from './dto/menu-list.dto';
 
 @Roles('client')
 @Controller('menu')
@@ -68,6 +69,13 @@ export class MenuController {
       console.log(error);
       throw new BadRequestException();
     }
+  }
+  @Roles('admin', 'menu_moderator')
+  @Get('/list')
+  async getMenuList(@Query() getMenuListDto: GetUserMenuDto) {
+    const result = await this.menuService.getMenuListDto(getMenuListDto);
+    // const a = result.menuList[0].expire
+    return new MenuListDto(result, getMenuListDto);
   }
 
   @Get('/actual')
