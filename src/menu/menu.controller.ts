@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   HttpStatus,
+  Param,
   ParseFilePipeBuilder,
   Post,
   Query,
@@ -19,6 +20,7 @@ import { MenuParserService } from '../lib/utils/menu-parser/menu-parser.service'
 import { CreateMenuFromDocxDto } from './dto/create-menu-from-docx.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MenuListDto } from './dto/menu-list.dto';
+import { GetMenuByIdDto } from './dto/get-menu-by-id.dto';
 
 @Roles('client')
 @Controller('menu')
@@ -74,7 +76,6 @@ export class MenuController {
   @Get('/list')
   async getMenuList(@Query() getMenuListDto: GetUserMenuDto) {
     const result = await this.menuService.getMenuListDto(getMenuListDto);
-    // const a = result.menuList[0].expire
     return new MenuListDto(result, getMenuListDto);
   }
 
@@ -90,5 +91,10 @@ export class MenuController {
   @Get('/actual/menu-categories')
   async getMenuCategories(@Req() req) {
     return await this.menuService.getActualMenuCategories(req.user.userId);
+  }
+  @Roles('admin', 'menu_moderator')
+  @Get('/:id')
+  async getMenuById(@Param() { id }: GetMenuByIdDto) {
+    return this.menuService.getMenuById(id);
   }
 }

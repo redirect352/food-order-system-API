@@ -77,6 +77,7 @@ export class MenuPositionService {
         },
       },
       where,
+      orderBy: { price: 'desc' },
       take: pageSize,
       skip: (page - 1) * pageSize,
     });

@@ -12,6 +12,7 @@ import { PrismaService } from '../database/prisma.service';
 import { menuDeclaration } from '../lib/utils/menu-parser/menu-parser.interface';
 import { BranchOfficeService } from '../branch-office/branch-office.service';
 import { GetMenuListDto } from './dto/get-menu-list.dto';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class MenuService {
@@ -91,7 +92,7 @@ export class MenuService {
 
     return await this.prismaService.menu.create({
       data: {
-        name: name ?? `Меню ${new Date().toISOString()}`,
+        name: name ?? `Меню ${dayjs().format('DD.MM.YYYY HH:mm')}`,
         relevantFrom,
         expire,
         authorId,
@@ -137,7 +138,6 @@ export class MenuService {
     });
     const menuList = await this.prismaService.menu.findMany({
       include: {
-        // _count: { select: { menu_positions: true, served_offices: true } },
         _count: true,
         providingCanteen_office: true,
         user: { select: { employee: true } },
@@ -153,5 +153,35 @@ export class MenuService {
       count,
       menuList,
     };
+  }
+
+  async getMenuById(id: number) {
+    const result = await this.prismaService.menu.findUnique({
+      omit: { authorId: true, providingCanteenId: true },
+      include: {
+        _count: true,
+        providingCanteen_office: { omit: { servingCanteenId: true } },
+        user: {
+          select: {
+            employee: { omit: { active: true, officeId: true, id: true } },
+          },
+        },
+        menu_positions: {
+          omit: { dishId: true },
+          include: {
+            dish: {
+              include: { providingCanteen: true, dish_category: true },
+              omit: { providingCanteenId: true, categoryId: true },
+            },
+          },
+        },
+      },
+      where: { id },
+    });
+    result.menu_positions.forEach((pos) => {
+      (pos.dish as any).category = pos.dish.dish_category;
+      pos.dish.dish_category = undefined;
+    });
+    return result;
   }
 }

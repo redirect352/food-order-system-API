@@ -113,7 +113,6 @@ export class OrderService {
       skip: (page - 1) * pageSize,
       take: pageSize,
     });
-    console.log(items);
     const count = await await this.prismaService.order.count({
       where: { clientId: userId, order_status: { active: active } },
     });
