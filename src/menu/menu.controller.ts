@@ -92,9 +92,10 @@ export class MenuController {
   async getMenuCategories(@Req() req) {
     return await this.menuService.getActualMenuCategories(req.user.userId);
   }
+
   @Roles('admin', 'menu_moderator')
   @Get('/:id')
   async getMenuById(@Param() { id }: GetMenuByIdDto) {
-    return this.menuService.getMenuById(id);
+    return await this.menuService.getMenuById(id);
   }
 }
