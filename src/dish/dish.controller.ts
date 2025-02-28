@@ -3,7 +3,7 @@ import { DishService } from './dish.service';
 import { CreateDishDto } from './dto/create-dish.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
-@Roles('admin', 'client')
+@Roles('admin')
 @Controller('dish')
 export class DishController {
   constructor(private readonly dishService: DishService) {}
