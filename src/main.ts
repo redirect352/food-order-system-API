@@ -22,6 +22,8 @@ async function bootstrap() {
   const port = +configService.get('API_PORT') || 5000;
   await app
     .listen(port)
-    .then(() => console.log(`server successfully started on port ${port}`));
+    .then(() =>
+      console.log(`${new Date()} server successfully started on port ${port}`),
+    );
 }
 bootstrap();

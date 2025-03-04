@@ -15,6 +15,7 @@ export type orderDeclaration = {
 export type orderPositionDeclaration = {
   count: number;
   menuPosition: menuPositionDeclaration;
+  comment?: string;
 };
 export type clientDeclaration = {
   name: string;

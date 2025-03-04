@@ -17,6 +17,7 @@ import { orderDeclaration } from '../lib/utils/orders-export/orders-export-file-
 import { OrderStatusService } from './order-status/order-status.service';
 import { ConfigService } from '@nestjs/config';
 import { ImageService } from '../image/image.service';
+import { CreateOrderPositionDto } from './dto/create-order-position.dto';
 @Injectable()
 export class OrderService {
   constructor(
@@ -30,18 +31,14 @@ export class OrderService {
   private readonly logger = new Logger(OrderService.name);
 
   async createOrder(createOrderDto: CreateOrderDto, userId: number) {
-    const {
-      menuPositions,
-      counts: menuPositionCounts,
-      deliveryDestinationId,
-    } = createOrderDto;
+    const { menuPositions, deliveryDestinationId } = createOrderDto;
     const defaultOrderStatus = process.env.ORDER_CREATED_STATUS;
-
+    const menuPositionIds = menuPositions.map(({ id }) => id);
     const res = await this.prismaService.$transaction(async (tx) => {
       const res =
         await this.menuPositionService.checkMenuPositionsAvailableForUser(
           userId,
-          menuPositions,
+          menuPositionIds,
           tx as PrismaClient,
         );
       if (!res.status) {
@@ -55,8 +52,7 @@ export class OrderService {
         res.positions.map((pos) => ({
           price: pos.price,
           discount: pos.discount,
-          count:
-            menuPositionCounts[menuPositions.findIndex((id) => id === pos.id)],
+          count: menuPositions.find(({ id }) => id === pos.id).count,
         })),
       );
       const order = await this.createOrderDB(
@@ -73,8 +69,7 @@ export class OrderService {
       await this.createMenuPositionsToOrderRelations(
         {
           orderId: order.id,
-          menuPositionsCounts: menuPositionCounts,
-          menuPositionsIds: menuPositions,
+          menuPositions,
         },
         tx as PrismaClient,
       );
@@ -143,6 +138,7 @@ export class OrderService {
                     providingCanteenId: true,
                   },
                   include: {
+                    dish_category: true,
                     providingCanteen: {
                       select: {
                         name: true,
@@ -256,19 +252,19 @@ export class OrderService {
 
   async createMenuPositionsToOrderRelations(
     data: {
-      menuPositionsIds: number[];
-      menuPositionsCounts: number[];
+      menuPositions: CreateOrderPositionDto[];
       orderId: number;
     },
     prismaClient: PrismaClient = this.prismaService,
   ) {
-    const { menuPositionsCounts, menuPositionsIds, orderId } = data;
-    const promises = menuPositionsIds.map((item, index) =>
+    const { menuPositions, orderId } = data;
+    const promises = menuPositions.map(({ id, count, comment }) =>
       prismaClient.order_to_menu_position.create({
         data: {
-          count: menuPositionsCounts[index],
-          menuPositionId: item,
+          count,
+          menuPositionId: id,
           orderId,
+          comment: comment === '' ? null : comment,
         },
       }),
     );
@@ -335,7 +331,7 @@ export class OrderService {
           officeName: user.employee.branch_office.name,
         },
         orderPositions: order_to_menu_position.map(
-          ({ count, menu_position }) => ({
+          ({ count, menu_position, comment }) => ({
             count,
             menuPosition: {
               dishDescription: {
@@ -346,6 +342,7 @@ export class OrderService {
               price: menu_position.price,
               discount: menu_position.discount,
             },
+            comment,
           }),
         ),
       }),

@@ -4,6 +4,7 @@ import { branch_office } from '@prisma/client';
 export type OrderPositionFullInfo = {
   count: number;
   menuPosition: MenuPositionItem;
+  comment?: string;
 };
 export class OrderFullInfoDto {
   public number: number;
@@ -27,6 +28,7 @@ export class OrderFullInfoDto {
     this.orderPositions = order.order_to_menu_position.map((pos) => ({
       count: pos.count,
       menuPosition: new MenuPositionItem(pos.menu_position),
+      comment: pos?.comment,
     }));
     this.deliveryDestination = new BranchOfficeMainInfoDto(
       order.deliveryDestination as branch_office,

@@ -9,7 +9,6 @@ export const Roles = (...roles: user_role[]) => {
     if (allowed.length > 0) additionalRoles.push(...allowed);
   });
   const final = [...new Set([...roles, ...additionalRoles])];
-  console.log({ roles, final });
   return SetMetadata(ROLES_KEY, final);
 };
 

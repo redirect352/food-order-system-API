@@ -18,10 +18,11 @@ export class IsMenuPositionsExistsConstraint
     @Inject() private readonly menuPositionService: MenuPositionService,
   ) {}
 
-  async validate(idList: number[]): Promise<boolean> {
-    if (!idList || idList.length === 0) {
+  async validate(idList: number[] | number): Promise<boolean> {
+    if (typeof idList !== 'number' && (!idList || idList.length === 0)) {
       return false;
     }
+    if (typeof idList === 'number') idList = [idList];
     const menuPositions =
       await this.menuPositionService.getMenuPositions(idList);
     if (!menuPositions || menuPositions.length !== idList.length) {

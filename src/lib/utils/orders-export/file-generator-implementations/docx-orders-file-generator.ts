@@ -55,7 +55,7 @@ export class DocxOrderGenerator extends OrdersExportFileGenerator {
     const issuedString = dayjs(issued).format('DD.MM.YY');
     const numberLabel = `${number}-${issuedString}`;
     return orderPositions.map(
-      ({ menuPosition, count }, index) =>
+      ({ menuPosition, count, comment }, index) =>
         new TableRow({
           children: [
             index === 0
@@ -81,7 +81,7 @@ export class DocxOrderGenerator extends OrdersExportFileGenerator {
             }),
             this.createCenteredCell(count.toString()),
             new TableCell({
-              children: [new Paragraph('')],
+              children: [new Paragraph(comment ?? '')],
             }),
           ],
         }),

@@ -133,6 +133,7 @@ model order_status {
 model order_to_menu_position {
   orderToMenuPositionId Int           @id @default(autoincrement())
   count                 Int
+  comment               String?
   menu_position         menu_position @relation(fields: [menuPositionId], references: [id])
   menuPositionId        Int
   order                 order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
