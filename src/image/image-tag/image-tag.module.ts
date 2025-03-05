@@ -7,5 +7,6 @@ import { DatabaseModule } from '../../database/database.module';
   imports: [DatabaseModule],
   controllers: [ImageTagController],
   providers: [ImageTagService],
+  exports: [ImageTagService],
 })
 export class ImageTagModule {}

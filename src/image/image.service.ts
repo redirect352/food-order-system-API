@@ -5,12 +5,14 @@ import { ConfigService } from '@nestjs/config';
 import { dish } from '@prisma/client';
 import { UploadImageDto } from './dto/upload-image.dto';
 import { extname } from 'path';
+import { ImageTagService } from './image-tag/image-tag.service';
 
 @Injectable()
 export class ImageService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly configService: ConfigService,
+    private readonly imageTagService: ImageTagService,
   ) {}
 
   async saveImages(
@@ -19,6 +21,7 @@ export class ImageService {
     authorId?: number,
   ) {
     const { name, tags } = uploadImageDto;
+    await this.imageTagService.createTags(tags);
     const images = await Promise.all(
       files.map(({ filename }) =>
         this.prismaService.image.create({

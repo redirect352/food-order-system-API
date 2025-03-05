@@ -6,6 +6,7 @@ import { DatabaseModule } from '../database/database.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import * as multer from 'multer';
+import { ImageTagModule } from './image-tag/image-tag.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import * as multer from 'multer';
       }),
       inject: [ConfigService, ImageService],
     }),
+    ImageTagModule,
   ],
   providers: [ImageService, IsImageExistsConstraint],
   controllers: [ImageController],
