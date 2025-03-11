@@ -10,6 +10,9 @@ import { PrismaService } from '../database/prisma.service';
 import { Prisma, PrismaClient, user } from '@prisma/client';
 import { EmployeeService } from '../employee/employee.service';
 import { BranchOfficeService } from '../branch-office/branch-office.service';
+import { SearchUsersDto } from './dto/search-users.dto';
+import { ResponseWithPagination } from 'types/response';
+import { UserMainInfoDto } from './dto/user-main-info.dto';
 
 @Injectable()
 export class UserService {
@@ -154,5 +157,38 @@ export class UserService {
       },
     );
     return result[0] as user;
+  }
+
+  async searchUsersIds(
+    searchUsersDto: SearchUsersDto,
+  ): Promise<ResponseWithPagination<number[]>> {
+    const { page, pageSize, destinationOfficeId } = searchUsersDto;
+    const count = await this.prismaService.user.count({
+      where: {
+        employee: { branch_office: { id: destinationOfficeId } },
+      },
+    });
+    const data = await this.prismaService.user.findMany({
+      select: { id: true },
+      where: {
+        employee: { branch_office: { id: destinationOfficeId } },
+      },
+      take: pageSize,
+      skip: (page - 1) * pageSize,
+    });
+
+    return {
+      page,
+      totalPages: Math.ceil(count / pageSize),
+      data: data.map(({ id }) => id),
+    };
+  }
+  async getUserMainInfo(id: number) {
+    const user = await this.prismaService.user.findUnique({
+      where: { id },
+      include: { employee: true },
+    });
+    const office = await this.getUserOffice(id);
+    return new UserMainInfoDto(user, office, user.employee);
   }
 }

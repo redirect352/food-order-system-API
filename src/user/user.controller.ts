@@ -1,7 +1,16 @@
-import { Controller, Get, NotFoundException, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserOwnInfoDto } from './dto/user-own-info.dto';
+import { SearchUsersDto } from './dto/search-users.dto';
+import { GetUserMainInfoDto } from './dto/get-user-main-info.dto';
 
 @Controller('user')
 export class UserController {
@@ -16,5 +25,16 @@ export class UserController {
       throw new NotFoundException('Пользователь не найден');
     }
     return new UserOwnInfoDto(user, office, employee);
+  }
+
+  @Get('/search')
+  @Roles('admin')
+  async searchUsers(@Query() searchUsersDto: SearchUsersDto) {
+    return await this.userService.searchUsersIds(searchUsersDto);
+  }
+  @Get('/main-info/:id')
+  @Roles('admin')
+  async getUserMainInfo(@Param() { id }: GetUserMainInfoDto) {
+    return await this.userService.getUserMainInfo(id);
   }
 }
