@@ -8,6 +8,7 @@ import { CheckEmployeeDto } from 'src/auth/dto/check-employee.dto';
 import { UpdateEmployeesInOfficeDto } from './dto/update-employees-in-office.dto';
 import { PrismaService } from '../database/prisma.service';
 import { setOfficeEmployeesInactive } from '@prisma/client/sql';
+import { UpdateEmployeeDto } from './dto/update-employee.dto';
 
 @Injectable()
 export class EmployeeService {
@@ -107,6 +108,15 @@ export class EmployeeService {
           equals: where.surname,
           mode: 'insensitive',
         },
+      },
+    });
+  }
+
+  async updateEmployee(id: number, updateEmployeeDto: UpdateEmployeeDto) {
+    return await this.prismaService.employee.update({
+      where: { id },
+      data: {
+        ...updateEmployeeDto,
       },
     });
   }

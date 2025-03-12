@@ -196,6 +196,14 @@ export class UserService {
   async updateUser(id: number, updateUserDto: UpdateUserDto) {
     const { login, email, emailConfirmed, active, officeId, role } =
       updateUserDto;
+    const employeeId = (
+      await this.prismaService.user.findUnique({ where: { id } })
+    ).employeeId;
+    if (typeof active !== 'undefined' || officeId)
+      await this.employeeService.updateEmployee(employeeId, {
+        active,
+        officeId,
+      });
     return await this.prismaService.user.update({
       data: {
         email,
