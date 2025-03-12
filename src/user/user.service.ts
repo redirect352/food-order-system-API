@@ -7,12 +7,13 @@ import {
 import { CryptoService } from 'src/lib/helpers/crypto/crypto.service';
 import { SignUpDto } from 'src/auth/dto/sign-up.dto';
 import { PrismaService } from '../database/prisma.service';
-import { Prisma, PrismaClient, user } from '@prisma/client';
+import { Prisma, PrismaClient, user, user_role } from '@prisma/client';
 import { EmployeeService } from '../employee/employee.service';
 import { BranchOfficeService } from '../branch-office/branch-office.service';
 import { SearchUsersDto } from './dto/search-users.dto';
 import { ResponseWithPagination } from 'types/response';
 import { UserMainInfoDto } from './dto/user-main-info.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -190,5 +191,19 @@ export class UserService {
     });
     const office = await this.getUserOffice(id);
     return new UserMainInfoDto(user, office, user.employee);
+  }
+
+  async updateUser(id: number, updateUserDto: UpdateUserDto) {
+    const { login, email, emailConfirmed, active, officeId, role } =
+      updateUserDto;
+    return await this.prismaService.user.update({
+      data: {
+        email,
+        login,
+        isPasswordTemporary: emailConfirmed,
+        role: role as user_role,
+      },
+      where: { id },
+    });
   }
 }

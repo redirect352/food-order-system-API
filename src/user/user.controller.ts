@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Get,
   NotFoundException,
   Param,
+  Patch,
   Query,
   Req,
 } from '@nestjs/common';
@@ -11,6 +13,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserOwnInfoDto } from './dto/user-own-info.dto';
 import { SearchUsersDto } from './dto/search-users.dto';
 import { GetUserMainInfoDto } from './dto/get-user-main-info.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('user')
 export class UserController {
@@ -32,9 +35,20 @@ export class UserController {
   async searchUsers(@Query() searchUsersDto: SearchUsersDto) {
     return await this.userService.searchUsersIds(searchUsersDto);
   }
+
   @Get('/main-info/:id')
   @Roles('admin')
   async getUserMainInfo(@Param() { id }: GetUserMainInfoDto) {
     return await this.userService.getUserMainInfo(id);
+  }
+
+  @Patch('/update/:id')
+  @Roles('admin')
+  async updateUserData(
+    @Param() { id }: GetUserMainInfoDto,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    const user = await this.userService.updateUser(id, updateUserDto);
+    return { id: user.id, message: 'Данные пользователя обновлены' };
   }
 }

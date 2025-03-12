@@ -5,12 +5,14 @@ import {
   IsStrongPassword,
   IsInt,
   Min,
+  NotContains,
 } from 'class-validator';
 import { isBranchOfficeExists } from 'src/branch-office/validators/branch-office-exists.validator';
 
 export class SignUpDto {
   @MinLength(5)
   @IsString()
+  @NotContains('@')
   login: string;
 
   @IsEmail()
