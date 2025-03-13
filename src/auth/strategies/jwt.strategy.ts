@@ -25,7 +25,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     let employee: employee = null;
     if (user)
       employee = await this.employeeService.findEmployeeById(user.employeeId);
-    if (!user || !employee.active || user.role !== payload.role) return null;
+    if (
+      !user ||
+      !employee.active ||
+      user.role !== payload.role ||
+      payload.hash !== user.refreshTokenHash?.slice(-30)
+    )
+      return null;
     return { userId: user.id, role: user.role };
   }
 }

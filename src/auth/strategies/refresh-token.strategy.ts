@@ -39,6 +39,7 @@ export class RefreshJwtStrategy extends PassportStrategy(
     if (!user || !employee.active || user.role !== payload.role) return null;
     if (
       !user.refreshTokenHash ||
+      !tokenFromHeader ||
       !(await argon2.verify(user.refreshTokenHash, tokenFromHeader))
     )
       return null;

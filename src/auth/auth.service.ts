@@ -57,33 +57,33 @@ export class AuthService {
     return null;
   }
 
-  async login(
-    user: user,
-    req: e.Request,
-    res: e.Response,
-    updateRefresh: boolean = true,
-  ) {
+  async login(user: user, req: e.Request, res: e.Response) {
     if (user.isPasswordTemporary) {
       await this.sendVerificationEmailToUser(user, req, res);
       return;
     }
-    const payload = { id: user.id, role: user.role };
-    const result: any = {
+    const payload = {
+      id: user.id,
       role: user.role,
-      access_token: await this.jwtService.signAsync(payload),
-      statusCode: 200,
     };
-    if (updateRefresh) {
-      result.refresh_token = await this.jwtService.signAsync(
-        payload,
-        this.refreshTokenConfig,
-      );
-      await this.userService.updateUserById(user.id, {
-        refreshTokenHash: await argon2.hash(result.refresh_token),
-      });
-    }
+    const refreshToken = await this.jwtService.signAsync(
+      payload,
+      this.refreshTokenConfig,
+    );
+    const refreshTokenHash = await argon2.hash(refreshToken);
+    await this.userService.updateUserById(user.id, {
+      refreshTokenHash,
+    });
     res.status(200);
-    res.send(result);
+    res.send({
+      role: user.role,
+      refresh_token: refreshToken,
+      access_token: await this.jwtService.signAsync({
+        ...payload,
+        hash: refreshTokenHash.slice(-30),
+      }),
+      statusCode: 200,
+    });
   }
 
   async logout(id: number) {
