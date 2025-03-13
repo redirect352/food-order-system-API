@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { isBranchOfficeExists } from '../../branch-office/validators/branch-office-exists.validator';
 
 export class SearchUsersDto {
@@ -16,4 +16,16 @@ export class SearchUsersDto {
   @Min(1)
   @isBranchOfficeExists()
   destinationOfficeId?: number;
+
+  @IsOptional()
+  @IsString()
+  s?: string;
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc';
+
+  @IsOptional()
+  @IsIn(['id', 'registered', 'changed'])
+  orderBy?: 'id' | 'registered' | 'changed';
 }

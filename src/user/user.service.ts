@@ -163,19 +163,40 @@ export class UserService {
   async searchUsersIds(
     searchUsersDto: SearchUsersDto,
   ): Promise<ResponseWithPagination<number[]>> {
-    const { page, pageSize, destinationOfficeId } = searchUsersDto;
-    const count = await this.prismaService.user.count({
-      where: {
-        employee: { branch_office: { id: destinationOfficeId } },
-      },
-    });
+    const { page, pageSize, destinationOfficeId, s, orderBy, sortOrder } =
+      searchUsersDto;
+    const where: Prisma.userWhereInput = {
+      AND: [
+        { employee: { branch_office: { id: destinationOfficeId } } },
+        {
+          OR: [
+            { email: { startsWith: s } },
+            { login: { startsWith: s } },
+            { employee: { surname: { startsWith: s, mode: 'insensitive' } } },
+            { employee: { name: { startsWith: s, mode: 'insensitive' } } },
+            {
+              employee: { patronymic: { startsWith: s, mode: 'insensitive' } },
+            },
+            {
+              employee: {
+                personnelNumber: { startsWith: s, mode: 'insensitive' },
+              },
+            },
+          ],
+        },
+      ],
+    };
+    const count = await this.prismaService.user.count({ where });
     const data = await this.prismaService.user.findMany({
       select: { id: true },
-      where: {
-        employee: { branch_office: { id: destinationOfficeId } },
-      },
+      where,
       take: pageSize,
       skip: (page - 1) * pageSize,
+      orderBy: !!orderBy
+        ? {
+            [orderBy]: sortOrder ?? 'asc',
+          }
+        : undefined,
     });
 
     return {
