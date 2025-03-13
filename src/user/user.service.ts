@@ -108,6 +108,7 @@ export class UserService {
       where: { id },
       data: {
         password: await this.cryptoService.hashPassword(newPassword),
+        refreshTokenHash: null,
       },
     });
   }
@@ -229,7 +230,7 @@ export class UserService {
       data: {
         email,
         login,
-        isPasswordTemporary: emailConfirmed,
+        isPasswordTemporary: !emailConfirmed,
         role: role as user_role,
       },
       where: { id },

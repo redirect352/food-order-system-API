@@ -14,6 +14,7 @@ import { UserOwnInfoDto } from './dto/user-own-info.dto';
 import { SearchUsersDto } from './dto/search-users.dto';
 import { GetUserMainInfoDto } from './dto/get-user-main-info.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from '../auth/dto/change-password.dto';
 
 @Controller('user')
 export class UserController {
@@ -50,5 +51,14 @@ export class UserController {
   ) {
     const user = await this.userService.updateUser(id, updateUserDto);
     return { id: user.id, message: 'Данные пользователя обновлены' };
+  }
+  @Patch('/change-password/:id')
+  @Roles('admin')
+  async updateUserPassword(
+    @Param() { id }: GetUserMainInfoDto,
+    @Body() { newPassword }: ChangePasswordDto,
+  ) {
+    const user = await this.userService.updateUserPassword(id, newPassword);
+    return { id: user.id, message: 'Пароль изменен' };
   }
 }
