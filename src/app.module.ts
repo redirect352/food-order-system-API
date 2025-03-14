@@ -23,6 +23,7 @@ import { ImageTagModule } from './image/image-tag/image-tag.module';
   imports: [
     ServeStaticModule.forRoot({
       rootPath: process.env.STATIC_PATH,
+      serveRoot: process.env.URL_PREFIX,
     }),
     ImageModule,
     UserModule,

@@ -10,7 +10,7 @@ async function bootstrap() {
     cors: true,
   });
   app.enableShutdownHooks();
-  app.setGlobalPrefix('/food-order-system/api');
+  app.setGlobalPrefix(process.env.URL_PREFIX);
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
