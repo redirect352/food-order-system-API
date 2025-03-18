@@ -137,4 +137,18 @@ export class AuthService {
       throw new ForbiddenException('Аккаунт пользователя уже активирован');
     }
   }
+  async refreshAccessToken(user: user) {
+    const payload = {
+      id: user.id,
+      role: user.role,
+    };
+    return {
+      role: user.role,
+      access_token: await this.jwtService.signAsync({
+        ...payload,
+        hash: user.refreshTokenHash.slice(-30),
+      }),
+      statusCode: 200,
+    };
+  }
 }
