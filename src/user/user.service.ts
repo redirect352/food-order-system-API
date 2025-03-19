@@ -230,7 +230,8 @@ export class UserService {
       data: {
         email,
         login,
-        isPasswordTemporary: !emailConfirmed,
+        isPasswordTemporary:
+          emailConfirmed === undefined ? undefined : !emailConfirmed,
         role: role as user_role,
       },
       where: { id },
