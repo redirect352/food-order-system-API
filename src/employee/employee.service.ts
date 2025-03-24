@@ -9,6 +9,10 @@ import { UpdateEmployeesInOfficeDto } from './dto/update-employees-in-office.dto
 import { PrismaService } from '../database/prisma.service';
 import { setOfficeEmployeesInactive } from '@prisma/client/sql';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
+import { SearchEmployeesDto } from './dto/search-employees.dto';
+import { Prisma } from '@prisma/client';
+import { ResponseWithPagination } from '../../types/response';
+import { EmployeeFullInfoDto } from './dto/employee-full-info.dto';
 
 @Injectable()
 export class EmployeeService {
@@ -119,5 +123,52 @@ export class EmployeeService {
         ...updateEmployeeDto,
       },
     });
+  }
+
+  async searchEmployees(
+    searchUsersDto: SearchEmployeesDto,
+  ): Promise<ResponseWithPagination<EmployeeFullInfoDto[]>> {
+    const {
+      page,
+      pageSize,
+      destinationOfficeId,
+      s,
+      orderBy,
+      sortOrder,
+      active,
+    } = searchUsersDto;
+    const where: Prisma.employeeWhereInput = {
+      AND: [
+        { officeId: destinationOfficeId, active },
+        {
+          OR: [
+            { surname: { startsWith: s, mode: 'insensitive' } },
+            { name: { startsWith: s, mode: 'insensitive' } },
+            { patronymic: { startsWith: s, mode: 'insensitive' } },
+            { personnelNumber: { startsWith: s, mode: 'insensitive' } },
+          ],
+        },
+      ],
+    };
+    const count = await this.prismaService.employee.count({ where });
+    const data = await this.prismaService.employee.findMany({
+      include: { branch_office: true },
+      omit: { officeId: true },
+      where,
+      take: pageSize,
+      skip: (page - 1) * pageSize,
+      orderBy: !!orderBy
+        ? {
+            [orderBy]: sortOrder ?? 'asc',
+          }
+        : undefined,
+    });
+    return {
+      page,
+      totalPages: Math.ceil(count / pageSize),
+      data: data.map(
+        (item) => new EmployeeFullInfoDto(item as any, item.branch_office),
+      ),
+    };
   }
 }

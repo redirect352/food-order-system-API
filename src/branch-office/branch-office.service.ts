@@ -34,7 +34,7 @@ export class BranchOfficeService {
     });
   }
 
-  async getBranchOfficeList(isCanteen: boolean) {
+  async getBranchOfficeList(isCanteen?: boolean) {
     return this.prismaService.branch_office.findMany({
       where: { isCanteen },
     });

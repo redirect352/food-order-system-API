@@ -52,6 +52,12 @@ export class BranchOfficeController {
     return offices.map((office) => new BranchOfficeMainInfoDto(office));
   }
 
+  @Get('/all')
+  async getAllList() {
+    const offices = await this.branchOfficeService.getBranchOfficeList();
+    return offices.map((office) => new BranchOfficeMainInfoDto(office));
+  }
+
   @Roles('menu_moderator', 'admin')
   @Get('/canteen-list')
   async getBranchOfficesList() {
