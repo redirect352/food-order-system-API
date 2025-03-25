@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsIn,
   IsInt,
   IsOptional,
@@ -21,6 +22,10 @@ export class CreateBranchOfficeDto {
   @IsOptional()
   @IsIn(Object.values($Enums.branch_office_type))
   officeType?: $Enums.branch_office_type;
+
+  @IsOptional()
+  @IsBoolean()
+  isAvailable?: boolean;
 
   @IsOptional()
   @IsInt()
