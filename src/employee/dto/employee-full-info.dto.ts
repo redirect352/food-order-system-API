@@ -5,9 +5,13 @@ import { BranchOfficeMainInfoDto } from '../../branch-office/dto/branch-office-m
 export class EmployeeFullInfoDto extends EmployeeInfoDto {
   office: BranchOfficeMainInfoDto;
   active: boolean;
+  changed: Date;
+  created: Date;
   constructor(employee: employee, office: branch_office) {
     super(employee, { includeId: true });
     this.office = new BranchOfficeMainInfoDto(office);
     this.active = employee.active;
+    this.changed = employee.changed;
+    this.created = employee.created;
   }
 }

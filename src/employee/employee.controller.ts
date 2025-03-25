@@ -14,6 +14,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateEmployeesInOfficeDto } from './dto/update-employees-in-office.dto';
 import { SearchEmployeesDto } from './dto/search-employees.dto';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
 
 @Roles('admin')
 @Controller('employee')
@@ -45,8 +46,13 @@ export class EmployeeController {
   }
 
   @Get('/search')
-  @Roles('admin', 'menu_moderator')
-  async searchUsers(@Query() searchUsersDto: SearchEmployeesDto) {
+  @Roles('admin')
+  async searchEmployees(@Query() searchUsersDto: SearchEmployeesDto) {
     return await this.employeeService.searchEmployees(searchUsersDto);
+  }
+
+  @Post('/create')
+  async createEmployee(@Body() createEmployeeDto: CreateEmployeeDto) {
+    return await this.employeeService.createEmployee(createEmployeeDto);
   }
 }

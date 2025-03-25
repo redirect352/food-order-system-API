@@ -13,6 +13,7 @@ import { SearchEmployeesDto } from './dto/search-employees.dto';
 import { Prisma } from '@prisma/client';
 import { ResponseWithPagination } from '../../types/response';
 import { EmployeeFullInfoDto } from './dto/employee-full-info.dto';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
 
 @Injectable()
 export class EmployeeService {
@@ -170,5 +171,14 @@ export class EmployeeService {
         (item) => new EmployeeFullInfoDto(item as any, item.branch_office),
       ),
     };
+  }
+
+  async createEmployee(createEmployeeDto: CreateEmployeeDto) {
+    const res = await this.prismaService.employee.create({
+      data: {
+        ...createEmployeeDto,
+      },
+    });
+    return res.id;
   }
 }

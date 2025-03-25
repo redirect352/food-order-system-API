@@ -59,6 +59,8 @@ model employee {
   patronymic      String        @default("-") @db.VarChar(63)
   active          Boolean
   officeId        Int
+  changed         DateTime      @updatedAt  @default(now())
+  created         DateTime      @default(now()) 
   branch_office   branch_office @relation(fields: [officeId], references: [id])
   user            user?
   
