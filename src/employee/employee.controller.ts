@@ -47,7 +47,6 @@ export class EmployeeController {
   @Get('/search')
   @Roles('admin', 'menu_moderator')
   async searchUsers(@Query() searchUsersDto: SearchEmployeesDto) {
-    console.log(searchUsersDto);
     return await this.employeeService.searchEmployees(searchUsersDto);
   }
 }

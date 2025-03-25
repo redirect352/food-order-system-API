@@ -35,7 +35,7 @@ export class IsBranchOfficeExistsConstraint
         'Филиала с указанным id не существует',
       );
     }
-    if (!branchOffice.isCanteen && checkOnCanteen) {
+    if (checkOnCanteen && branchOffice.officeType !== 'canteen') {
       throw new UnprocessableEntityException(
         'Указанный филиал не является столовой.',
       );

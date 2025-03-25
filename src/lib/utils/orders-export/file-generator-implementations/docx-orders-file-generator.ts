@@ -13,6 +13,7 @@ import {
   TextRun,
   Packer,
   ITableCellOptions,
+  IParagraphOptions,
 } from 'docx';
 export class DocxOrderGenerator extends OrdersExportFileGenerator {
   async parseFile(
@@ -51,25 +52,31 @@ export class DocxOrderGenerator extends OrdersExportFileGenerator {
   getOrderRow(orderDeclaration: orderDeclaration) {
     const { number, issued, orderPositions, client } = orderDeclaration;
     const { surname, name, patronymic, personnelNumber, officeName } = client;
-    const clientFullName = `${surname} ${name.charAt(0).toUpperCase()}.${patronymic.charAt(0).toUpperCase()}. (${personnelNumber}, ${officeName})`;
-    const issuedString = dayjs(issued).format('DD.MM.YY');
-    const numberLabel = `${number}-${issuedString}`;
+    const clientFullName = `${surname} ${name.charAt(0).toUpperCase()}.${patronymic.charAt(0).toUpperCase()}. (${personnelNumber})`;
+    // const issuedString = dayjs(issued).format('DD.MM.YY');
+    // const numberLabel = `${number}-${issuedString}`;
+    const numberLabel = `${number}`;
     return orderPositions.map(
       ({ menuPosition, count, comment }, index) =>
         new TableRow({
           children: [
             index === 0
-              ? new TableCell({
-                  children: [new Paragraph(numberLabel)],
-                  verticalMerge: 'restart',
-                })
+              ? this.createCenteredCell(
+                  numberLabel,
+                  {
+                    verticalMerge: 'restart',
+                  },
+                  '20pt',
+                )
               : new TableCell({
                   children: [],
                   verticalMerge: 'continue',
                 }),
             index === 0
               ? new TableCell({
-                  children: [new Paragraph(clientFullName)],
+                  children: [
+                    this.createTextParagraph(clientFullName, {}, '14pt'),
+                  ],
                   verticalMerge: 'restart',
                 })
               : new TableCell({
@@ -77,11 +84,17 @@ export class DocxOrderGenerator extends OrdersExportFileGenerator {
                   verticalMerge: 'continue',
                 }),
             new TableCell({
-              children: [new Paragraph(menuPosition.dishDescription.name)],
+              children: [
+                this.createTextParagraph(
+                  menuPosition.dishDescription.name,
+                  {},
+                  '12pt',
+                ),
+              ],
             }),
             this.createCenteredCell(count.toString()),
             new TableCell({
-              children: [new Paragraph(comment ?? '')],
+              children: [this.createTextParagraph(comment ?? '', {}, '12pt')],
             }),
           ],
         }),
@@ -114,16 +127,45 @@ export class DocxOrderGenerator extends OrdersExportFileGenerator {
   private createCenteredCell(
     text: string,
     options: Omit<ITableCellOptions, 'children'> = {},
+    size?: TextSize,
   ) {
     return new TableCell({
       ...options,
       verticalAlign: 'center',
       children: [
         new Paragraph({
-          children: [new TextRun(text)],
+          children: [
+            new TextRun({
+              text,
+              size: size ?? '16pt',
+            }),
+          ],
           alignment: 'center',
         }),
       ],
     });
   }
+  private createTextParagraph(
+    text: string,
+    options: Omit<IParagraphOptions, 'children'> = {},
+    size?: TextSize,
+  ) {
+    return new Paragraph({
+      ...options,
+      children: [
+        new TextRun({
+          text,
+          size: size ?? '16pt',
+        }),
+      ],
+    });
+  }
 }
+type TextSize =
+  | number
+  | `${number}mm`
+  | `${number}cm`
+  | `${number}in`
+  | `${number}pt`
+  | `${number}pc`
+  | `${number}pi`;

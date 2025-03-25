@@ -1,5 +1,6 @@
 import {
   IsBoolean,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -7,6 +8,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { isBranchOfficeExists } from '../validators/branch-office-exists.validator';
+import { $Enums } from '@prisma/client';
 
 export class UpdateBranchOfficeDto {
   @IsInt()
@@ -25,12 +27,16 @@ export class UpdateBranchOfficeDto {
   address?: string;
 
   @IsOptional()
-  @IsBoolean()
-  isCanteen?: boolean;
+  @IsIn(Object.values($Enums.branch_office_type))
+  officeType?: $Enums.branch_office_type;
 
   @IsOptional()
   @IsInt()
   @Min(1)
   @isBranchOfficeExists({ checkOnCanteen: true })
   servingCanteenId?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isAvailable?: boolean;
 }

@@ -2,11 +2,13 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { BranchOfficeService } from './branch-office.service';
 import { CreateBranchOfficeDto } from './dto/create-branch-office.dto';
@@ -15,6 +17,7 @@ import { GetBranchOfficeDto } from './dto/get-office.dto';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { BranchOfficeMainInfoDto } from './dto/branch-office-main-info.dto';
+import { GetBranchOfficeFullInfoListDto } from './dto/get-branch-office-full-info-list.dto';
 
 @Roles('admin')
 @Controller('branch-office')
@@ -45,10 +48,23 @@ export class BranchOfficeController {
     }
   }
 
+  @Delete(`/delete/:id`)
+  async deleteOffice(@Param('id') id: string) {
+    try {
+      await this.branchOfficeService.removeBranchOfficeById(id);
+      return { message: 'deleted' };
+    } catch (err) {
+      throw new BadRequestException(
+        'Ошибка невозможно удалить указанных филиал',
+      );
+    }
+  }
+
   @Public()
   @Get('/registration-list')
   async getRegistrationList() {
-    const offices = await this.branchOfficeService.getBranchOfficeList(false);
+    const offices =
+      await this.branchOfficeService.getBranchOfficeList('branch');
     return offices.map((office) => new BranchOfficeMainInfoDto(office));
   }
 
@@ -61,14 +77,16 @@ export class BranchOfficeController {
   @Roles('menu_moderator', 'admin')
   @Get('/canteen-list')
   async getBranchOfficesList() {
-    const offices = await this.branchOfficeService.getBranchOfficeList(true);
+    const offices =
+      await this.branchOfficeService.getBranchOfficeList('canteen');
     return offices.map((office) => new BranchOfficeMainInfoDto(office));
   }
 
   @Roles('client')
   @Get('/delivery-points')
   async getDeliveryPointsList() {
-    const offices = await this.branchOfficeService.getBranchOfficeList(false);
+    const offices =
+      await this.branchOfficeService.getBranchOfficeList('branch');
     return offices.map((office) => new BranchOfficeMainInfoDto(office));
   }
 
@@ -81,5 +99,11 @@ export class BranchOfficeController {
         `Филиал с названием ${getBranchOfficeDto.name} не найден`,
       );
     return new BranchOfficeMainInfoDto(office);
+  }
+
+  @Roles('admin')
+  @Get('/all/full-info')
+  async getOfficesFullInfoList(@Query() query: GetBranchOfficeFullInfoListDto) {
+    return await this.branchOfficeService.getBranchOfficesFullInfoList(query);
   }
 }

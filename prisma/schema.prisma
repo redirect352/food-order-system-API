@@ -11,10 +11,13 @@ datasource db {
 model branch_office {
   id                  Int             @id @default(autoincrement())
   name                String          @db.VarChar(127)
-  isCanteen           Boolean         @default(false) 
+  officeType          branch_office_type @default(branch)
   address             String          @db.VarChar(127)
   servingCanteen      branch_office?  @relation("branch_officeToserving_canteen", fields: [servingCanteenId], references: [id])
   servingCanteenId    Int?
+  isAvailable        Boolean         @default(true)
+  changed                           DateTime      @updatedAt 
+  created                           DateTime      @default(now()) 
   servedOffices      branch_office[] @relation("branch_officeToserving_canteen")
   dishes              dish[]
   employees           employee[]
@@ -166,4 +169,9 @@ enum user_role {
   menu_moderator @map("menu-moderator")
   CExport       @map("1C-export")
   admin
+}
+enum branch_office_type {
+  canteen
+  branch
+  special
 }

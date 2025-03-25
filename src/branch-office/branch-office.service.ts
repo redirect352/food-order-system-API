@@ -3,6 +3,10 @@ import { GetBranchOfficeDto } from './dto/get-office.dto';
 import { PrismaService } from '../database/prisma.service';
 import { CreateBranchOfficeDto } from './dto/create-branch-office.dto';
 import { UpdateBranchOfficeDto } from './dto/update-branch-office.dto';
+import { $Enums } from '@prisma/client';
+import { GetBranchOfficeFullInfoListDto } from './dto/get-branch-office-full-info-list.dto';
+import { ResponseWithPagination } from '../../types/response';
+import { BranchOfficeFullInfoDto } from './dto/branch-office-full-info.dto';
 
 @Injectable()
 export class BranchOfficeService {
@@ -21,22 +25,22 @@ export class BranchOfficeService {
   }
 
   async updateBranchOffice(updateBranchOfficeDto: UpdateBranchOfficeDto) {
-    const { officeId, name, servingCanteenId, isCanteen, address } =
-      updateBranchOfficeDto;
+    const { officeId, ...updateValues } = updateBranchOfficeDto;
     return this.prismaService.branch_office.update({
       where: { id: officeId },
       data: {
-        name,
-        address,
-        servingCanteenId,
-        isCanteen: isCanteen !== undefined ? Boolean(isCanteen) : undefined,
+        ...updateValues,
       },
     });
   }
 
-  async getBranchOfficeList(isCanteen?: boolean) {
+  async getBranchOfficeList(
+    officeType?: $Enums.branch_office_type,
+    include?: { servingCanteen?: boolean },
+  ) {
     return this.prismaService.branch_office.findMany({
-      where: { isCanteen },
+      where: { officeType },
+      include,
     });
   }
 
@@ -56,5 +60,39 @@ export class BranchOfficeService {
       },
     });
     return offices.map(({ id }) => id);
+  }
+
+  async removeBranchOfficeById(id: string) {
+    return this.prismaService.branch_office.delete({
+      where: { id: +id },
+    });
+  }
+
+  async getBranchOfficesFullInfoList({
+    page,
+    pageSize,
+    sortOrder,
+    orderBy,
+  }: GetBranchOfficeFullInfoListDto): Promise<
+    ResponseWithPagination<BranchOfficeFullInfoDto[]>
+  > {
+    const count = await this.prismaService.branch_office.count();
+    const offices = await this.prismaService.branch_office.findMany({
+      include: { servingCanteen: true },
+      take: pageSize,
+      skip: (page - 1) * pageSize,
+      orderBy: !!orderBy
+        ? {
+            [orderBy]: sortOrder ?? 'asc',
+          }
+        : undefined,
+    });
+    return {
+      data: offices.map(
+        (office) => new BranchOfficeFullInfoDto(office, office.servingCanteen),
+      ),
+      page: page,
+      totalPages: Math.ceil(count / pageSize),
+    };
   }
 }
