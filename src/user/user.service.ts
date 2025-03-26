@@ -51,8 +51,13 @@ export class UserService {
     if (user) {
       const employee = await this.employeeService.findEmployeeById(
         user.employeeId,
+        { branch_office: { select: { isAvailable: true } } },
       );
-      return { user, active: employee.active };
+      return {
+        user,
+        active: employee.active,
+        officeActive: employee.branch_office.isAvailable,
+      };
     }
     return null;
   }
@@ -235,6 +240,13 @@ export class UserService {
         role: role as user_role,
       },
       where: { id },
+    });
+  }
+
+  async invalidateUsersAuthStatus(where: Prisma.userWhereInput) {
+    return await this.prismaService.user.updateMany({
+      data: { refreshTokenHash: null },
+      where,
     });
   }
 }

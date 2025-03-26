@@ -37,11 +37,15 @@ export class AuthService {
       login,
       email,
     });
-    if (!authData) throw new ForbiddenException();
-    const { user, active } = authData;
+    if (!authData)
+      throw new ForbiddenException(
+        'Пользователь с указанными данными не найден',
+      );
+    const { user, active, officeActive } = authData;
     if (
       user &&
       active &&
+      officeActive &&
       (await this.cryptoService.comparePassword(password, user.password))
     ) {
       if (user.isPasswordTemporary) {
@@ -54,7 +58,10 @@ export class AuthService {
         id: user.id,
       };
     }
-    return null;
+    return {
+      employeeActive: active,
+      officeActive,
+    };
   }
 
   async login(user: user, req: e.Request, res: e.Response) {

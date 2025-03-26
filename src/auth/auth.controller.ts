@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   NotFoundException,
   Patch,
@@ -75,6 +76,14 @@ export class AuthController {
     if (!authData) {
       throw new NotFoundException(
         'Пользователь с указанными данными не найден',
+      );
+    }
+    if (authData.active === false) {
+      throw new ForbiddenException('Данный пользователь уволен');
+    }
+    if (authData.officeActive === false) {
+      throw new ForbiddenException(
+        'Ваш филиал отключен от системы заказы питания',
       );
     }
     const { user } = authData;

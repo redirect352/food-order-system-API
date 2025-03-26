@@ -63,30 +63,37 @@ export class BranchOfficeController {
   @Public()
   @Get('/registration-list')
   async getRegistrationList() {
-    const offices =
-      await this.branchOfficeService.getBranchOfficeList('branch');
+    const offices = await this.branchOfficeService.getBranchOfficeList(
+      'branch',
+      { isAvailable: true },
+    );
     return offices.map((office) => new BranchOfficeMainInfoDto(office));
   }
 
   @Get('/all')
   async getAllList() {
-    const offices = await this.branchOfficeService.getBranchOfficeList();
+    const offices =
+      await this.branchOfficeService.getBranchOfficeList(undefined);
     return offices.map((office) => new BranchOfficeMainInfoDto(office));
   }
 
   @Roles('menu_moderator', 'admin')
   @Get('/canteen-list')
   async getBranchOfficesList() {
-    const offices =
-      await this.branchOfficeService.getBranchOfficeList('canteen');
+    const offices = await this.branchOfficeService.getBranchOfficeList(
+      'canteen',
+      { isAvailable: true },
+    );
     return offices.map((office) => new BranchOfficeMainInfoDto(office));
   }
 
   @Roles('client')
   @Get('/delivery-points')
   async getDeliveryPointsList() {
-    const offices =
-      await this.branchOfficeService.getBranchOfficeList('branch');
+    const offices = await this.branchOfficeService.getBranchOfficeList(
+      'branch',
+      { isAvailable: true },
+    );
     return offices.map((office) => new BranchOfficeMainInfoDto(office));
   }
 

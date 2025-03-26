@@ -17,9 +17,21 @@ export class LocalLoginStrategy extends PassportStrategy(
       { login: username },
       password,
     );
-    if (!user) {
-      throw new UnauthorizedException();
+    if (user.id) return user;
+    console.log(user);
+    const res = user as any;
+    if (res.employeeActive === false) {
+      throw new UnauthorizedException(
+        'Ваш аккаунт заблокирован в связи с увольнением',
+      );
     }
-    return user;
+    if (res.officeActive === false) {
+      throw new UnauthorizedException(
+        'Сотрудникам вашего филиала вход в систему закрыт',
+      );
+    }
+    throw new UnauthorizedException(
+      'Ошибка авторизации неверный логин или пароль',
+    );
   }
 }

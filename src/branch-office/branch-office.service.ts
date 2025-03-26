@@ -1,16 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { GetBranchOfficeDto } from './dto/get-office.dto';
 import { PrismaService } from '../database/prisma.service';
 import { CreateBranchOfficeDto } from './dto/create-branch-office.dto';
 import { UpdateBranchOfficeDto } from './dto/update-branch-office.dto';
-import { $Enums } from '@prisma/client';
+import { $Enums, Prisma } from '@prisma/client';
 import { GetBranchOfficeFullInfoListDto } from './dto/get-branch-office-full-info-list.dto';
 import { ResponseWithPagination } from '../../types/response';
 import { BranchOfficeFullInfoDto } from './dto/branch-office-full-info.dto';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class BranchOfficeService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    @Inject(forwardRef(() => UserService))
+    private userService: UserService,
+  ) {}
   async getBranchOfficeById(id: number) {
     return this.prismaService.branch_office.findUnique({
       where: { id },
@@ -26,6 +31,13 @@ export class BranchOfficeService {
 
   async updateBranchOffice(updateBranchOfficeDto: UpdateBranchOfficeDto) {
     const { officeId, ...updateValues } = updateBranchOfficeDto;
+    if (updateValues.isAvailable === false) {
+      await this.userService.invalidateUsersAuthStatus({
+        employee: {
+          officeId,
+        },
+      });
+    }
     return this.prismaService.branch_office.update({
       where: { id: officeId },
       data: {
@@ -36,10 +48,11 @@ export class BranchOfficeService {
 
   async getBranchOfficeList(
     officeType?: $Enums.branch_office_type,
+    where?: Prisma.branch_officeWhereInput,
     include?: { servingCanteen?: boolean },
   ) {
     return this.prismaService.branch_office.findMany({
-      where: { officeType },
+      where: { officeType, ...where },
       include,
     });
   }

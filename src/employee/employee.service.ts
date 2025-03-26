@@ -97,8 +97,8 @@ export class EmployeeService {
       throw new NotAcceptableException('Cannot update user list.');
     }
   }
-  async findEmployeeById(id: number) {
-    return this.prismaService.employee.findUnique({ where: { id } });
+  async findEmployeeById(id: number, include?: Prisma.employeeInclude) {
+    return this.prismaService.employee.findUnique({ where: { id }, include });
   }
 
   async findEmployee(where: {
