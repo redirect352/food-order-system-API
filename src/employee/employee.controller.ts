@@ -26,7 +26,7 @@ import { UpdateEmployeeDto } from './dto/update-employee.dto';
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
-  @Post('/update-list-in-office')
+  @Post('/update/list-in-office')
   @UseInterceptors(FileInterceptor('file'))
   async updateEmployeeList(
     @UploadedFile(

@@ -72,25 +72,37 @@ export class EmployeeService {
         personnelNumber: item[1].toString(),
       }));
     try {
-      await this.prismaService.$transaction(async (tx) => {
-        await tx.$queryRawTyped(setOfficeEmployeesInactive(officeId));
-        await tx.employee.createMany({
-          data: content,
-          skipDuplicates: true,
-        });
-        await tx.employee.updateMany({
-          data: { active: true },
-          where: {
-            AND: [
-              { officeId },
-              {
-                personnelNumber: {
-                  in: content.map((item) => item.personnelNumber),
+      return await this.prismaService.$transaction(async (tx) => {
+        const result = {
+          created: 0,
+          active: 0,
+          inactive: 0,
+        };
+        const k = await tx.$queryRawTyped(setOfficeEmployeesInactive(officeId));
+        result.inactive = Number(k[0]?.count);
+        result.created = (
+          await tx.employee.createMany({
+            data: content,
+            skipDuplicates: true,
+          })
+        ).count;
+        result.active = (
+          await tx.employee.updateMany({
+            data: { active: true },
+            where: {
+              AND: [
+                { officeId },
+                {
+                  personnelNumber: {
+                    in: content.map((item) => item.personnelNumber),
+                  },
                 },
-              },
-            ],
-          },
-        });
+              ],
+            },
+          })
+        ).count;
+        result.inactive -= result.active;
+        return result;
       });
     } catch (err) {
       this.logger.log(err);
