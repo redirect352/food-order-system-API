@@ -16,7 +16,7 @@ model branch_office {
   servingCanteen      branch_office?  @relation("branch_officeToserving_canteen", fields: [servingCanteenId], references: [id])
   servingCanteenId    Int?
   isAvailable        Boolean         @default(true)
-  changed                           DateTime      @updatedAt 
+  changed                           DateTime      @updatedAt @default(now())
   created                           DateTime      @default(now()) 
   servedOffices      branch_office[] @relation("branch_officeToserving_canteen")
   dishes              dish[]
