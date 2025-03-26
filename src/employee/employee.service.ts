@@ -181,4 +181,10 @@ export class EmployeeService {
     });
     return res.id;
   }
+
+  async deleteEmployee(id: number) {
+    return await this.prismaService.employee.delete({
+      where: { id },
+    });
+  }
 }

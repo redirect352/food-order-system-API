@@ -23,4 +23,8 @@ export class UpdateEmployeeDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @IsOptional()
+  @IsString()
+  personnelNumber?: string;
 }

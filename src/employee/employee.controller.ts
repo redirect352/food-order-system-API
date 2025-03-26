@@ -1,9 +1,13 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
+  Param,
   ParseFilePipeBuilder,
+  Patch,
   Post,
   Query,
   UploadedFile,
@@ -15,6 +19,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateEmployeesInOfficeDto } from './dto/update-employees-in-office.dto';
 import { SearchEmployeesDto } from './dto/search-employees.dto';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { UpdateEmployeeDto } from './dto/update-employee.dto';
 
 @Roles('admin')
 @Controller('employee')
@@ -54,5 +59,25 @@ export class EmployeeController {
   @Post('/create')
   async createEmployee(@Body() createEmployeeDto: CreateEmployeeDto) {
     return await this.employeeService.createEmployee(createEmployeeDto);
+  }
+
+  @Patch('/update/:id')
+  async updateEmployee(
+    @Param('id') id: string,
+    @Body() updateEmployeeDto: UpdateEmployeeDto,
+  ) {
+    return await this.employeeService.updateEmployee(+id, updateEmployeeDto);
+  }
+
+  @Delete('/delete/:id')
+  async deleteEmployee(@Param('id') id: string) {
+    try {
+      await this.employeeService.deleteEmployee(+id);
+      return { message: 'deleted' };
+    } catch (err) {
+      throw new BadRequestException(
+        'Ошибка невозможно удалить данного сотрудника',
+      );
+    }
   }
 }
