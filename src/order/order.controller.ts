@@ -23,6 +23,7 @@ import * as dayjs from 'dayjs';
 import { Readable } from 'stream';
 import { OrdersExportService } from '../lib/utils/orders-export/orders-export.service';
 import { BranchOfficeService } from '../branch-office/branch-office.service';
+import { SearchOrdersDto } from './dto/search-orders.dto';
 
 @Roles('client')
 @Controller('order')
@@ -89,11 +90,14 @@ export class OrderController {
     @Req() req,
   ) {
     const { date, number } = getOrderFullInfoDto;
-    const res = await this.orderService.getOrder(date, number, req.user.userId);
+    const isAdmin =
+      req.user.role === 'admin' || req.user.role === 'menu_moderator';
+    const userId = isAdmin ? undefined : +req.user.userId;
+    const res = await this.orderService.getOrder(date, number, userId);
     if (!res) {
       throw new NotFoundException(`Заказ ${number}-${date} не найден`);
     }
-    return new OrderFullInfoDto(res);
+    return new OrderFullInfoDto(res, isAdmin);
   }
 
   @Get('/total')
@@ -123,5 +127,11 @@ export class OrderController {
     @Req() req,
   ) {
     await this.orderService.cancelOrder(number, date, req.user.userId);
+  }
+
+  @Roles('menu_moderator')
+  @Get('/search')
+  async searchOrders(@Query() searchOrdersDto: SearchOrdersDto) {
+    return await this.orderService.searchOrders(searchOrdersDto);
   }
 }

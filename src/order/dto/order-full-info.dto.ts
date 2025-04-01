@@ -1,6 +1,6 @@
 import { MenuPositionItem } from 'src/menu/dto/menu-position-item.dto';
 import { BranchOfficeMainInfoDto } from '../../branch-office/dto/branch-office-main-info.dto';
-import { branch_office } from '@prisma/client';
+import { branch_office, employee } from '@prisma/client';
 export type OrderPositionFullInfo = {
   count: number;
   menuPosition: MenuPositionItem;
@@ -16,8 +16,9 @@ export class OrderFullInfoDto {
   public canCancel: boolean;
   public orderPositions: Array<OrderPositionFullInfo>;
   public deliveryDestination: BranchOfficeMainInfoDto;
+  public userLabel?: string;
 
-  public constructor(order: any) {
+  public constructor(order: any, addUserLabel: boolean = false) {
     this.number = order.number;
     this.issued = order.issued;
     this.fullPrice = order.fullPrice;
@@ -33,5 +34,13 @@ export class OrderFullInfoDto {
     this.deliveryDestination = new BranchOfficeMainInfoDto(
       order.deliveryDestination as branch_office,
     );
+
+    if (addUserLabel) {
+      const employee = order?.user?.employee as employee;
+      const branch_office = order?.user?.employee
+        ?.branch_office as branch_office;
+      if (employee)
+        this.userLabel = `${employee.surname} ${employee.name} ${employee.patronymic}, ${employee.personnelNumber}, ${branch_office.name}`;
+    }
   }
 }

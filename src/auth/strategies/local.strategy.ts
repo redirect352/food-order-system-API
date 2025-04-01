@@ -18,7 +18,6 @@ export class LocalLoginStrategy extends PassportStrategy(
       password,
     );
     if (user.id) return user;
-    console.log(user);
     const res = user as any;
     if (res.employeeActive === false) {
       throw new UnauthorizedException(

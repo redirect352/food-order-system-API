@@ -18,6 +18,9 @@ import { OrderStatusService } from './order-status/order-status.service';
 import { ConfigService } from '@nestjs/config';
 import { ImageService } from '../image/image.service';
 import { CreateOrderPositionDto } from './dto/create-order-position.dto';
+import { SearchOrdersDto } from './dto/search-orders.dto';
+import { SearchOrderItemDto } from './dto/search-order-item.dto';
+import { ResponseWithPagination } from '../../types/response';
 @Injectable()
 export class OrderService {
   constructor(
@@ -117,7 +120,7 @@ export class OrderService {
     };
   }
 
-  async getOrder(issued: string, number: number, userId: string) {
+  async getOrder(issued: string, number: number, clientId?: number) {
     const order = await this.prismaService.order.findFirst({
       omit: {
         id: true,
@@ -125,6 +128,7 @@ export class OrderService {
         clientId: true,
       },
       include: {
+        user: { select: { employee: { include: { branch_office: true } } } },
         order_status: true,
         deliveryDestination: true,
         order_to_menu_position: {
@@ -155,7 +159,7 @@ export class OrderService {
       where: {
         issued: new Date(issued),
         number,
-        clientId: +userId,
+        clientId,
       },
     });
     if (order) {
@@ -359,5 +363,56 @@ export class OrderService {
       data: { statusId: status.id },
       where,
     });
+  }
+
+  async searchOrders(
+    searchOrdersDto: SearchOrdersDto,
+  ): Promise<ResponseWithPagination<SearchOrderItemDto[]>> {
+    const {
+      page,
+      pageSize,
+      periodEnd,
+      periodStart,
+      deliveryDestinationId,
+      orderBy,
+      sortOrder,
+    } = searchOrdersDto;
+    const where: Prisma.orderWhereInput = {
+      deliveryDestinationId,
+      created: { gte: periodStart, lte: periodEnd },
+    };
+    const count = await this.prismaService.order.count({ where });
+    const res = await this.prismaService.order.findMany({
+      where,
+      include: {
+        _count: { select: { order_to_menu_position: true } },
+        deliveryDestination: true,
+        order_status: true,
+        user: {
+          select: {
+            employee: {
+              select: {
+                personnelNumber: true,
+                surname: true,
+                name: true,
+                patronymic: true,
+              },
+            },
+          },
+        },
+      },
+      take: pageSize,
+      skip: (page - 1) * pageSize,
+      orderBy: !!orderBy
+        ? {
+            [orderBy]: sortOrder ?? 'asc',
+          }
+        : undefined,
+    });
+    return {
+      data: res.map((item) => new SearchOrderItemDto(item)),
+      page,
+      totalPages: Math.ceil(count / pageSize),
+    };
   }
 }
