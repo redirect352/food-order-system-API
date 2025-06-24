@@ -30,9 +30,9 @@ export class ImageService {
             path: filename,
             tags: tags
               ? {
-                  connectOrCreate: tags.map((tagName) => ({
-                    where: { tagName },
-                    create: { tagName },
+                  connectOrCreate: tags.map(({ tagName, officeId }) => ({
+                    where: { tagName, officeId },
+                    create: { tagName, officeId },
                   })),
                 }
               : undefined,

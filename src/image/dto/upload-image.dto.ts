@@ -1,5 +1,6 @@
+import { IsOptional, IsString, MinLength } from 'class-validator';
+import { CreateImageTagDto } from '../image-tag/dto/create-image-tag.dto';
 import { Transform } from 'class-transformer';
-import { IsArray, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UploadImageDto {
   @IsOptional()
@@ -8,8 +9,6 @@ export class UploadImageDto {
   name?: string;
 
   @IsOptional()
-  @Transform(({ value }) => value.split(','))
-  @IsArray()
-  @IsString({ each: true })
-  tags: string[];
+  @Transform(({ value }) => JSON.parse(value))
+  tags: CreateImageTagDto[];
 }

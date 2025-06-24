@@ -9,6 +9,6 @@ import { UserModule } from '../user/user.module';
   imports: [DatabaseModule, forwardRef(() => UserModule)],
   controllers: [BranchOfficeController],
   providers: [BranchOfficeService, IsBranchOfficeExistsConstraint],
-  exports: [BranchOfficeService],
+  exports: [BranchOfficeService, IsBranchOfficeExistsConstraint],
 })
 export class BranchOfficeModule {}

@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
-  previewFeatures = ["typedSql"]
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres", "typedSql"]
 }
 
 datasource db {
@@ -9,21 +9,24 @@ datasource db {
 }
 
 model branch_office {
-  id                  Int             @id @default(autoincrement())
-  name                String          @db.VarChar(127)
-  officeType          branch_office_type @default(branch)
-  address             String          @db.VarChar(127)
-  servingCanteen      branch_office?  @relation("branch_officeToserving_canteen", fields: [servingCanteenId], references: [id])
-  servingCanteenId    Int?
-  isAvailable        Boolean         @default(true)
-  changed                           DateTime      @updatedAt @default(now())
-  created                           DateTime      @default(now()) 
-  servedOffices      branch_office[] @relation("branch_officeToserving_canteen")
-  dishes              dish[]
-  employees           employee[]
-  providedMenus       menu[]
-  consumedMenus       menu[] @relation("MenuForConsumption")
-  order order[]
+  id               Int                @id @default(autoincrement())
+  name             String             @db.VarChar(127)
+  address          String             @db.VarChar(127)
+  servingCanteenId Int?
+  changed          DateTime           @default(now()) @updatedAt
+  created          DateTime           @default(now())
+  isAvailable      Boolean            @default(true)
+  officeType       branch_office_type @default(branch)
+  servingCanteen   branch_office?     @relation("branch_officeToserving_canteen", fields: [servingCanteenId], references: [id])
+  servedOffices    branch_office[]    @relation("branch_officeToserving_canteen")
+  dishes           dish[]
+  employees        employee[]
+  providedMenus    menu[]
+  order            order[]
+  consumedMenus    menu[]             @relation("MenuForConsumption")
+
+
+  image_tag image_tag[]
 }
 
 model dish {
@@ -31,23 +34,22 @@ model dish {
   name               String          @db.VarChar(127)
   description        String          @db.VarChar(255)
   quantity           String          @db.VarChar(63)
-  calorieContent     String?          @db.VarChar(63)
+  calorieContent     String?         @db.VarChar(63)
   proteins           Int?
   fats               Int?
   carbohydrates      Int?
   bestBeforeDate     String?         @db.VarChar(63)
   externalProducer   String?         @db.VarChar(127)
-  providingCanteen   branch_office   @relation(fields: [providingCanteenId], references: [id])
   providingCanteenId Int
-  dish_category      dish_category?  @relation(fields: [categoryId], references: [id])
   categoryId         Int?
+  dish_category      dish_category?  @relation(fields: [categoryId], references: [id])
+  providingCanteen   branch_office   @relation(fields: [providingCanteenId], references: [id])
   menu_position      menu_position[]
-  // @@index([name( raw("to_tsvector('russian', name)"))], type: Gin) 
 }
 
 model dish_category {
   id   Int    @id @default(autoincrement())
-  name String @db.VarChar(255) @unique
+  name String @unique @db.VarChar(255)
   dish dish[]
 }
 
@@ -59,54 +61,56 @@ model employee {
   patronymic      String        @default("-") @db.VarChar(63)
   active          Boolean
   officeId        Int
-  changed         DateTime      @updatedAt  @default(now())
-  created         DateTime      @default(now()) 
+  changed         DateTime      @default(now()) @updatedAt
+  created         DateTime      @default(now())
   branch_office   branch_office @relation(fields: [officeId], references: [id])
   user            user?
-  
+
   @@unique([surname, personnelNumber, officeId])
 }
 
 model image {
-  id           Int      @id @default(autoincrement())
-  path         String   @db.VarChar(255)
-  name         String   @db.VarChar(255)
-  uploaded     DateTime @default(now())
-  user         user?    @relation(fields: [authorId], references: [id])
-  authorId     Int? 
-  tags         image_tag[]
+  id       Int         @id @default(autoincrement())
+  path     String      @db.VarChar(255)
+  name     String      @db.VarChar(255)
+  uploaded DateTime    @default(now())
+  authorId Int?
+  user     user?       @relation(fields: [authorId], references: [id])
+  tags     image_tag[] @relation("imageToimage_tag")
 }
 
-model image_tag{
-  id           Int            @id @default(autoincrement())
-  tagName      String         @db.VarChar(127) @unique()
-  created      DateTime       @default(now()) 
-  images       image[]
+model image_tag {
+  id      Int      @id @default(autoincrement())
+  tagName String   @unique @db.VarChar(127)
+  created DateTime @default(now())
+  officeId Int?
+  images  image[]  @relation("imageToimage_tag")
+  branch_office   branch_office? @relation(fields: [officeId], references: [id])
 }
 
 model menu {
-  id                                Int           @id @default(autoincrement())
-  relevantFrom                      DateTime                           
-  expire                            DateTime                   
-  name                              String        @db.VarChar(127)
-  created                           DateTime      @default(now()) 
-  changed                           DateTime      @updatedAt
-  providingCanteen_office           branch_office @relation(fields: [providingCanteenId], references: [id])
-  providingCanteenId                Int
-  user                              user?         @relation(fields: [authorId], references: [id])
-  authorId                          Int?
-  menu_positions                    menu_position[]
-  served_offices                    branch_office[] @relation(name: "MenuForConsumption")
+  id                      Int             @id @default(autoincrement())
+  relevantFrom            DateTime
+  expire                  DateTime
+  name                    String          @db.VarChar(127)
+  created                 DateTime        @default(now())
+  changed                 DateTime        @updatedAt
+  providingCanteenId      Int
+  authorId                Int?
+  user                    user?           @relation(fields: [authorId], references: [id])
+  providingCanteen_office branch_office   @relation(fields: [providingCanteenId], references: [id])
+  served_offices          branch_office[] @relation("MenuForConsumption")
+  menu_positions          menu_position[] @relation("menuTomenu_position")
 }
 
 model menu_position {
-  id                                Int                                 @id @default(autoincrement())
-  price                             Int
-  discount                          Int                                 @default(0)
-  menus                             menu[]
-  dish                              dish                                @relation(fields: [dishId], references: [id])
-  dishId                            Int
-  order_to_menu_position            order_to_menu_position[]
+  id                     Int                      @id @default(autoincrement())
+  price                  Int
+  discount               Int                      @default(0)
+  dishId                 Int
+  dish                   dish                     @relation(fields: [dishId], references: [id])
+  order_to_menu_position order_to_menu_position[]
+  menus                  menu[]                   @relation("menuTomenu_position")
 }
 
 model order {
@@ -114,54 +118,54 @@ model order {
   issued                 DateTime                 @db.Date
   number                 Int
   fullPrice              Int
-  order_status           order_status             @relation(fields: [statusId], references: [id])
   statusId               Int
-  user                   user                     @relation(fields: [clientId], references: [id])
   clientId               Int
-  deliveryDestination    branch_office                     @relation(fields: [deliveryDestinationId], references: [id])
+  updated                DateTime                 @updatedAt
+  created                DateTime                 @default(now())
   deliveryDestinationId  Int
+  user                   user                     @relation(fields: [clientId], references: [id])
+  deliveryDestination    branch_office            @relation(fields: [deliveryDestinationId], references: [id])
+  order_status           order_status             @relation(fields: [statusId], references: [id])
   order_to_menu_position order_to_menu_position[]
-  updated                DateTime  @updatedAt
-  created                DateTime  @default(now())
 
   @@unique([number, issued])
 }
 
 model order_status {
   id        Int     @id @default(autoincrement())
-  name      String  @db.VarChar(127) @unique
+  name      String  @unique @db.VarChar(127)
   active    Boolean @default(true)
-  canCancel Boolean @default(false) 
+  canCancel Boolean @default(false)
   order     order[]
 }
 
 model order_to_menu_position {
   orderToMenuPositionId Int           @id @default(autoincrement())
   count                 Int
+  menuPositionId        Int
+  orderId               Int
   comment               String?
   menu_position         menu_position @relation(fields: [menuPositionId], references: [id])
-  menuPositionId        Int
   order                 order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId               Int
 }
 
 model user {
   id                        Int       @id @default(autoincrement())
-  login                     String    @unique() @db.VarChar(127)
+  login                     String    @unique @db.VarChar(127)
   password                  String    @db.VarChar(255)
-  refreshTokenHash          String?   @db.VarChar(255)
-  email                     String    @unique() @db.VarChar(255)
+  email                     String    @unique @db.VarChar(255)
   role                      user_role @default(client)
   isPasswordTemporary       Boolean   @default(true)
-  verificationEmailSendTime DateTime? 
+  verificationEmailSendTime DateTime?
   lastPasswordResetTime     DateTime?
+  employeeId                Int       @unique
+  registered                DateTime  @default(now())
+  changed                   DateTime  @default(now()) @updatedAt
+  refreshTokenHash          String?   @db.VarChar(255)
   image                     image[]
   menu                      menu[]
   order                     order[]
   employee                  employee  @relation(fields: [employeeId], references: [id])
-  employeeId       Int      @unique()
-  registered                DateTime  @default(now())
-  changed                   DateTime  @updatedAt @default(now())
 }
 
 enum user_role {
@@ -169,9 +173,10 @@ enum user_role {
   deliveryman
   order_issuing  @map("order-issuing")
   menu_moderator @map("menu-moderator")
-  CExport       @map("1C-export")
+  CExport        @map("1C-export")
   admin
 }
+
 enum branch_office_type {
   canteen
   branch

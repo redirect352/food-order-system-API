@@ -15,6 +15,7 @@ import { SearchUsersDto } from './dto/search-users.dto';
 import { GetUserMainInfoDto } from './dto/get-user-main-info.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from '../auth/dto/change-password.dto';
+import { SearchUserTagDto } from './dto/search-user-tag.dto';
 
 @Controller('user')
 export class UserController {
@@ -60,5 +61,11 @@ export class UserController {
   ) {
     const user = await this.userService.updateUserPassword(id, newPassword);
     return { id: user.id, message: 'Пароль изменен' };
+  }
+
+  @Roles('menu_moderator')
+  @Get('/search/tags')
+  async searchUserTags(@Query() searchUserTagDto: SearchUserTagDto) {
+    return await this.userService.searchUsersTags(searchUserTagDto);
   }
 }

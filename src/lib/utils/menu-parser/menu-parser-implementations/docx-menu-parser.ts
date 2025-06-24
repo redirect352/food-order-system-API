@@ -52,6 +52,7 @@ export class DocxMenuParser extends MenuFileParser {
       throw new BadRequestException('Некорректный формат файла. ');
     const result: menuPositionDeclaration[] = [];
     let currentCategory: string = undefined;
+
     for (let i = startIndex + 1; i < documentLines.length; i++) {
       if (documentLines[i + 1].charCodeAt(0) === 160) {
         currentCategory = documentLines[i];

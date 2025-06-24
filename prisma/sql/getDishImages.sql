@@ -8,6 +8,7 @@ SELECT dish.id, image.path, image.name, row_number() over (partition by dish.id 
 	inner join "_imageToimage_tag" j  on j."B" =  image_tag.id
 	inner join image on j."A" = image.id
   where dish.id = ANY($1)
+  and dish."providingCanteenId"="image_tag"."officeId"
   ) as t
 where t.numb <= $2
 

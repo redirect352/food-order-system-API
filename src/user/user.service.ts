@@ -1,5 +1,7 @@
 import {
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -14,6 +16,8 @@ import { SearchUsersDto } from './dto/search-users.dto';
 import { ResponseWithPagination } from 'types/response';
 import { UserMainInfoDto } from './dto/user-main-info.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { SearchUserTagDto } from './dto/search-user-tag.dto';
+import { UserTagDto } from './dto/user-tag.dto';
 
 @Injectable()
 export class UserService {
@@ -21,6 +25,7 @@ export class UserService {
     private readonly cryptoService: CryptoService,
     private readonly prismaService: PrismaService,
     private readonly employeeService: EmployeeService,
+    @Inject(forwardRef(() => BranchOfficeService))
     private readonly branchOfficeService: BranchOfficeService,
   ) {}
   private readonly logger = new Logger(UserService.name);
@@ -248,5 +253,22 @@ export class UserService {
       data: { refreshTokenHash: null },
       where,
     });
+  }
+  async searchUsersTags(searchUserTagDto: SearchUserTagDto) {
+    return [];
+    // const { page, pageSize, s } = searchUserTagDto;
+    // const items = await this.prismaService.user.findMany({
+    //   select: { id: true, employee: true },
+    //   where: {
+    //     employee: {
+    //       surname: {
+    //         search: s,
+    //       },
+    //     },
+    //   },
+    //   take: pageSize,
+    //   skip: (page - 1) * pageSize,
+    // });
+    // return items.map((item) => new UserTagDto(item.id, item.employee));
   }
 }

@@ -43,6 +43,7 @@ export class ImageController {
     @Body() uploadImageDto: UploadImageDto,
     @Req() req,
   ) {
+    console.log(uploadImageDto);
     const result = await this.imageService.saveImages(
       files,
       uploadImageDto,

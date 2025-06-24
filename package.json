@@ -30,7 +30,7 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/serve-static": "^4.0.2",
     "@nestjs/typeorm": "^10.0.2",
-    "@prisma/client": "^6.4.1",
+    "@prisma/client": "^6.10.1",
     "@types/bcrypt": "^5.0.2",
     "@types/crypto-js": "^4.2.2",
     "@types/word-extractor": "^1.0.5",
