@@ -194,4 +194,7 @@ export class MenuService {
       },
     });
   }
+  async deleteMenu(id: number) {
+    return this.prismaService.menu.delete({ where: { id } });
+  }
 }

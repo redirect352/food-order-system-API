@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Param,
@@ -108,5 +109,11 @@ export class MenuController {
     @Body() updateMenuDto: UpdateMenuDto,
   ) {
     return await this.menuService.updateMenu(id, updateMenuDto);
+  }
+
+  @Roles('menu_moderator')
+  @Delete('/:id')
+  async deleteMenu(@Param() { id }: GetMenuByIdDto) {
+    return await this.menuService.deleteMenu(id);
   }
 }
