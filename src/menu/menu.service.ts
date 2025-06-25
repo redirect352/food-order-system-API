@@ -13,6 +13,7 @@ import { menuDeclaration } from '../lib/utils/menu-parser/menu-parser.interface'
 import { BranchOfficeService } from '../branch-office/branch-office.service';
 import { GetMenuListDto } from './dto/get-menu-list.dto';
 import * as dayjs from 'dayjs';
+import { UpdateMenuDto } from './dto/update-menu.dto';
 
 @Injectable()
 export class MenuService {
@@ -183,5 +184,14 @@ export class MenuService {
       pos.dish.dish_category = undefined;
     });
     return result;
+  }
+
+  async updateMenu(id: number, updateMenuDto: UpdateMenuDto) {
+    return this.prismaService.menu.update({
+      where: { id },
+      data: {
+        ...updateMenuDto,
+      },
+    });
   }
 }

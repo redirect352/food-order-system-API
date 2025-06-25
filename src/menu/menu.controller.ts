@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   ParseFilePipeBuilder,
+  Patch,
   Post,
   Query,
   Req,
@@ -21,6 +22,7 @@ import { CreateMenuFromDocxDto } from './dto/create-menu-from-docx.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MenuListDto } from './dto/menu-list.dto';
 import { GetMenuByIdDto } from './dto/get-menu-by-id.dto';
+import { UpdateMenuDto } from './dto/update-menu.dto';
 
 @Roles('client')
 @Controller('menu')
@@ -97,5 +99,14 @@ export class MenuController {
   @Get('/:id')
   async getMenuById(@Param() { id }: GetMenuByIdDto) {
     return await this.menuService.getMenuById(id);
+  }
+
+  @Roles('menu_moderator')
+  @Patch('/:id')
+  async updateMenu(
+    @Param() { id }: GetMenuByIdDto,
+    @Body() updateMenuDto: UpdateMenuDto,
+  ) {
+    return await this.menuService.updateMenu(id, updateMenuDto);
   }
 }
