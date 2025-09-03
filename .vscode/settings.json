@@ -1,7 +1,7 @@
 {
   "zenMode.hideActivityBar": true,
   "editor.hideCursorInOverviewRuler": false,
-  "editor.minimap.autohide": true,
+  "editor.minimap.autohide": "mouseover",
   "cSpell.words": [
     "typeorm"
   ]

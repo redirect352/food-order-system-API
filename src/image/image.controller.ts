@@ -1,9 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
+  Param,
   ParseFilePipeBuilder,
+  Patch,
   Post,
   Query,
   Req,
@@ -16,6 +19,8 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { GetImageListDto } from './dto/get-image-list.dto';
 import { UploadImageDto } from './dto/upload-image.dto';
 import { ConfigService } from '@nestjs/config';
+import { EditImageTagsDto } from './dto/edit-image-tags.dto';
+import { DeleteImagesDto } from './dto/delete-images.dto';
 
 @Roles('admin', 'menu_moderator')
 @Controller('image')
@@ -43,7 +48,6 @@ export class ImageController {
     @Body() uploadImageDto: UploadImageDto,
     @Req() req,
   ) {
-    console.log(uploadImageDto);
     const result = await this.imageService.saveImages(
       files,
       uploadImageDto,
@@ -57,6 +61,25 @@ export class ImageController {
     @Query()
     getListDto: GetImageListDto,
   ) {
-    return this.imageService.getList(getListDto.page, getListDto.pageSize);
+    return this.imageService.getList(getListDto);
+  }
+  @Patch('/:id/update/tags')
+  async updateImageTags(
+    @Param('id') id: string,
+    @Body() editImageTagsDto: EditImageTagsDto,
+  ) {
+    await this.imageService.editImageTags(id, editImageTagsDto);
+    return { code: 200 };
+  }
+
+  @Delete('/delete')
+  async deleteImages(@Body() deleteImagesDto: DeleteImagesDto) {
+    return await this.imageService.deleteImages(deleteImagesDto);
+  }
+
+  @Patch('/tags/clear')
+  async deleteImagesTags(@Body() deleteImagesDto: DeleteImagesDto) {
+    console.log('here');
+    return await this.imageService.deleteImagesTags(deleteImagesDto);
   }
 }

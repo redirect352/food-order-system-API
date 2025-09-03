@@ -1,4 +1,4 @@
-import { IsInt, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class GetImageListDto {
   @IsInt()
@@ -9,4 +9,8 @@ export class GetImageListDto {
   @Min(1)
   @Max(100)
   pageSize: number = 5;
+
+  @IsOptional()
+  @IsString()
+  s?: string;
 }

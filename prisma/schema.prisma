@@ -81,11 +81,12 @@ model image {
 
 model image_tag {
   id      Int      @id @default(autoincrement())
-  tagName String   @unique @db.VarChar(127)
+  tagName String   @db.VarChar(127)
   created DateTime @default(now())
   officeId Int?
   images  image[]  @relation("imageToimage_tag")
   branch_office   branch_office? @relation(fields: [officeId], references: [id])
+  @@unique([tagName, officeId])
 }
 
 model menu {
