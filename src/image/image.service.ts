@@ -61,12 +61,28 @@ export class ImageService {
   async getList(
     getListDto: GetImageListDto,
   ): Promise<ResponseWithPagination<ImageFullInfoDto[]>> {
-    const { page, pageSize, s } = getListDto;
+    const {
+      page,
+      pageSize,
+      s,
+      canteenId,
+      sortOrder = 'desc',
+      orderBy = 'id',
+    } = getListDto;
+    console.log(getListDto);
     const where: Prisma.imageWhereInput = {
-      tags: s ? { some: { tagName: { startsWith: s } } } : undefined,
+      tags:
+        s || canteenId
+          ? {
+              some: {
+                AND: { tagName: { startsWith: s ?? '' }, officeId: canteenId },
+              },
+            }
+          : undefined,
     };
+    console.log(where);
     const images = await this.prismaService.image.findMany({
-      orderBy: { uploaded: 'desc' },
+      orderBy: { [orderBy]: sortOrder },
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: {
@@ -188,8 +204,6 @@ export class ImageService {
       }),
     );
     const result = await Promise.all(promises);
-    console.log(promises);
-    console.log(result);
     return result;
   }
 }

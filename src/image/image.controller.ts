@@ -79,7 +79,6 @@ export class ImageController {
 
   @Patch('/tags/clear')
   async deleteImagesTags(@Body() deleteImagesDto: DeleteImagesDto) {
-    console.log('here');
     return await this.imageService.deleteImagesTags(deleteImagesDto);
   }
 }

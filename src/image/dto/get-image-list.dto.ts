@@ -1,4 +1,5 @@
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { isBranchOfficeExists } from '../../branch-office/validators/branch-office-exists.validator';
 
 export class GetImageListDto {
   @IsInt()
@@ -13,4 +14,18 @@ export class GetImageListDto {
   @IsOptional()
   @IsString()
   s?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @isBranchOfficeExists({ checkOnCanteen: true })
+  canteenId?: number;
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc';
+
+  @IsOptional()
+  @IsIn(['id', 'uploaded'])
+  orderBy?: 'id' | 'uploaded';
 }
