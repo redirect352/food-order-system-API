@@ -69,7 +69,6 @@ export class ImageService {
       sortOrder = 'desc',
       orderBy = 'id',
     } = getListDto;
-    console.log(getListDto);
     const where: Prisma.imageWhereInput = {
       tags:
         s || canteenId
@@ -80,7 +79,6 @@ export class ImageService {
             }
           : undefined,
     };
-    console.log(where);
     const images = await this.prismaService.image.findMany({
       orderBy: { [orderBy]: sortOrder },
       skip: (page - 1) * pageSize,
